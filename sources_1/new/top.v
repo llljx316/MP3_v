@@ -58,16 +58,16 @@ module top(
         .clk                     ( clk                    ),
         .rst_n                   ( rst_n                  ),
         .i_DREQ                  ( i_DREQ                 ),
-        // .i_vol                   ( vol           [15:0]   ),
-        // .i_music_select          ( song_select            ),
-        // .i_pause                 ( pause                  ),
+        .i_vol                   ( vol           [15:0]   ),
+        .i_song_select          ( song_select            ),
+        .i_pause                 ( pause                  ),
 
         .o_XCS                   ( o_XCS                  ),
         .o_XDCS                  ( o_XDCS                 ),
         .o_SCK                   ( o_SCK                  ),
         .o_SI                    ( o_SI                   ),
         .o_XRST                  ( o_XRST                 ),
-        .o_LED                   ( o_LED                  )//,
-        // .o_FINISH                ( finish                 )
+        .o_LED                   ( o_LED                  ),
+        .o_FINISH                ( finish                 )
     );
 endmodule

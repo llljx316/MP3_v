@@ -32,6 +32,8 @@ begin
     #(PERIOD*2) rst_n  =  1;
 end
 
+
+
 top  u_top (
     .clk                     ( clk      ),
     .rst_n                   ( rst_n    ),
