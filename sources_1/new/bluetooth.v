@@ -20,7 +20,9 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module bluetooth(
+module bluetooth#(
+    parameter SONG_NUM = 2
+)(
     input clk,
     input rst_n,
     input rx,
@@ -28,7 +30,7 @@ module bluetooth(
 
 
     output reg [15:0] o_vol,
-    output reg o_song_select,
+    output reg [4:0] o_song_select,
     output reg o_pause
     );
 
@@ -39,10 +41,10 @@ module bluetooth(
     localparam PRE      = 3;
     localparam VOL_PLUS = 4;
     localparam VOL_DEC  = 5;
-    localparam MUSIC0   = 8'h41;
+    localparam MUSIC0   = 8'h40;
     localparam MUSIC1   = 8'h41;
 
-    localparam VOL_CHANGE = 4079;
+    localparam VOL_CHANGE = 14;
 
     reg [3:0] state;
     wire [7:0] rx_data;
@@ -61,7 +63,7 @@ module bluetooth(
 
     always@(posedge clk or negedge rst_n) begin
         if(~rst_n) begin
-            o_vol <= 16'hffff;
+            o_vol <= 16'h0000;
             o_pause <= 0;
             o_song_select <= 0;
         end
@@ -70,39 +72,48 @@ module bluetooth(
         else begin
             case (state)
                 CMD_PRE: begin
-                    if(i_FINISH)begin
-                        o_vol <= 16'hffff;
-                        o_pause <= 0;
-                    end
-                    else if(rx_done) begin
+                    if(rx_done) begin
                         state <= rx_data;
                     end
                 end
 
                 PAUSE: begin
-                    o_pause <= 1;
+                    o_pause <= ~o_pause;
                     state <= CMD_PRE;
                 end
 
                 NEXT:begin
-                    o_song_select <= o_song_select+1;
+                    o_song_select <= o_song_select<SONG_NUM?o_song_select+1:0;
                     state <= CMD_PRE;
                 end
 
                 PRE:begin
-                    o_song_select <= o_song_select-1;
+                    o_song_select <= o_song_select>0?o_song_select-1:SONG_NUM-1;
                     state <= CMD_PRE;
                 end
 
                 VOL_PLUS:begin
-                    o_vol <= (o_vol< (16'hfefe)? o_vol+VOL_CHANGE: o_vol);
+                    o_vol[7:0] <= (o_vol[7:0]>0? o_vol[7:0]-VOL_CHANGE: 0);
+                    o_vol[15:8] <= (o_vol[15:8]>0? o_vol[15:8]-VOL_CHANGE: 0);
                     state <= CMD_PRE;
                 end
 
                 VOL_DEC: begin
-                    o_vol <= (o_vol>0? o_vol-VOL_CHANGE: o_vol);
+                    o_vol[7:0] <= (o_vol[7:0]< (8'hfc)? o_vol[7:0]+VOL_CHANGE: 8'hfc);
+                    o_vol[15:8] <= (o_vol[15:8]< (8'hfc)? o_vol[15:8]+VOL_CHANGE: 8'hfc);
                     state <= CMD_PRE;
                 end
+
+                MUSIC0:begin
+                    o_song_select <= 0;
+                    state <= CMD_PRE;
+                end
+
+                MUSIC1: begin
+                    o_song_select <= 1;
+                    state <= CMD_PRE;
+                end
+
 
                 default: ;
             endcase

@@ -19,14 +19,15 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 //`define test
+`define test_audio
 
 module mp3#(
-    parameter DELAY_TIME = 5000,
+    parameter DELAY_TIME = 500000,
     parameter CMD_NUM = 2
 )(
         input clk,
         input  rst_n,
-        //input  i_SO,             //芯片的输出信号
+        //input  i_SO,             //芯片的输出信�?
         input  i_DREQ,           //执行信号
         input  i_song_select,
         input  i_pause,
@@ -34,23 +35,35 @@ module mp3#(
 
         output reg o_XCS,        //选中
         output reg o_XDCS,       //数据选片
-        output reg o_SCK,            //即时钟
+        output reg o_SCK,            //即时�?
         output reg o_SI,
         output reg o_XRST,
         output reg o_LED,
-        output reg o_FINISH
+        output reg o_FINISH,
+        output wire [15:0] o_vol,
+        output wire o_song_select
     );
 
-   
 
 
 `ifndef test
     wire clk_mp3;
 
-    clock_divider#(.Time(10))
-    clk_10(
-        .clkin(clk),
-        .clkout(clk_mp3)
+    // clock_divider#(.Time(10))
+    // clk_10(
+    //     .clkin(clk),
+    //     .clkout(clk_mp3)
+    // );
+
+    clk_wiz_0
+
+    clk_div(
+    // Clock out ports
+    .clk_out1(clk_mp3),
+    // Status and control signals
+    .resetn(rst_n),
+    // Clock in ports
+    .clk_in1(clk)
     );
 `else
     integer div_cnt = 0;
@@ -74,8 +87,9 @@ module mp3#(
     //commands
     //first command: new mode and soft reset
     //second command: biggest volume
-    reg [63:0] cmd = {32'h02000804,32'h020B0000};
-    reg [31:0] vol_cmd ;
+    reg [63:0] cmd = {32'h02000804,32'h020B2A2A};
+    //reg [31:0] vol_cmd ;
+    reg [15:0] vol;
 
     //count
     integer delay_cnt = 0;
@@ -90,6 +104,25 @@ module mp3#(
     //storage relative
     wire [15:0] data;
     //reg [15:0] test_data = 16'hfefe;
+
+    reg song_reg0, song_reg1, song_reg2, song_reg3;
+
+    always@(posedge clk_mp3 or negedge rst_n) begin
+		if(!rst_n) begin
+			song_reg0 <= 1'b1;
+			song_reg1 <= 1'b1;
+			song_reg2 <= 1'b1;
+			song_reg3 <= 1'b1;
+		end
+
+		else begin
+			//move
+			song_reg0 <= i_song_select;
+			song_reg1 <= song_reg0;
+			song_reg2 <= song_reg1;
+			song_reg3 <= song_reg2;
+		end
+	end
 
     blk_mem_gen_1 music1(
         .clka(clk),
@@ -108,19 +141,28 @@ module mp3#(
     reg song_select;
     assign data = song_select==0?dout1:dout2;
     //assign data = test_data;
+    assign o_vol = cmd[15:0];
+    assign o_song_select = song_select;
+    reg pause;
+    
 
     reg [15:0] _Data;
     //state machine
     always@(posedge clk_mp3 or negedge rst_n) begin
         //reset
-        if(!rst_n || song_select!=i_song_select) begin
+        if(!rst_n || song_reg2!=song_reg3 || i_pause!=pause) begin
             song_select <= i_song_select;
-            addr <= 0;
             o_XCS <= 1'b1;
             o_XDCS <= 1'b1;
             o_XRST <= 1'b0;
             o_SCK <= 1'b0;
-            addr <= 0;
+            
+            //����������������������������������������������������������������������
+            addr <= 0;//������
+            pause <= i_pause;
+            //����������������������������������������������������������������
+           
+            
             cmd_cnt <= 0;
             cnt <= 0;
             delay_cnt <= 0;
@@ -141,7 +183,7 @@ module mp3#(
                     end
                     else if(i_DREQ) begin
                         state <= WRITE_CMD;
-                        cnt <= 0;           //多加的
+                        cnt <= 0;           //多加�?
                     end
                     else ;
                 end
@@ -170,16 +212,13 @@ module mp3#(
 
                 DATA_PRE:begin
                     //critirial whether to change the state
-                    if(i_pause)
-                        o_FINISH <= 1;
-
-                    else if (i_vol!=16'hffff) begin
+                    if (i_vol!=cmd[15:0]) begin
                         state <= VOL_PRE;
-                        cmd_cnt <= 0;
-                        o_FINISH <= 1;
+                        cmd[15:0]  <= i_vol;
+                        cmd_cnt <= 0;           //clear unpredictable status?
                     end
 
-                    if(i_DREQ) begin
+                    else if(i_DREQ) begin
                         o_SCK <= 1'b0;
                         cnt <= 0;
                         state <= WRITE_DATA;
@@ -193,40 +232,37 @@ module mp3#(
                 WRITE_DATA:begin
                     //if(i_DREQ)begin
                     //down_side
-                    if(o_SCK) begin
-                        if(cnt == 16) begin
-                            addr <= addr + 1;//有延迟
-                            o_XDCS <= 1'b1;
-                            state <= DATA_PRE;
+                    if(i_DREQ) begin
+                        if(o_SCK) begin
+                            if(cnt == 16) begin
+                                addr <= addr + 1;//有延�?
+                                o_XDCS <= 1'b1;
+                                state <= DATA_PRE;
+                            end
+                            else begin
+                                //refresh data
+                                //down side operation
+                                //use both upper side and down side
+                                o_XDCS <= 0;
+                                o_SI <= _Data[15];//shift register
+                                _Data <= {_Data[14:0],_Data[15]};
+                                cnt <= cnt + 1;
+                                //$display(cnt);
+                            end
                         end
-                        else begin
-                            //refresh data
-                            //down side operation
-                            //use both upper side and down side
-                            o_XDCS <= 0;
-                            o_SI <= _Data[15];//shift register
-                            _Data <= {_Data[14:0],_Data[15]};
-                            cnt <= cnt + 1;
-                            //$display(cnt);
-                        end
+                        //transmit data
+                        
+                        o_SCK <= ~o_SCK;
                     end
-                    //transmit data
-                    
-                    o_SCK <= ~o_SCK;
                     //end
                     //else;
                 end
 
                 VOL_PRE:begin
                     o_SCK <= 0;
-                    if(cmd_cnt == 1) begin
-                        state <= DATA_PRE;
-                        cmd_cnt <= 0;
-                    end
-                    else if(i_DREQ) begin
+                    if(i_DREQ) begin
                         state <= WRITE_VOL;
-                        vol_cmd <= {16'h020B,i_vol};
-                        cnt <= 0;           //多加的
+                        cnt <= 0;           //多加�?
                     end
                     else ;
                 end
@@ -236,15 +272,14 @@ module mp3#(
                         if(o_SCK) begin  //1
                             if(cnt == 32) begin
                                 o_XCS <= 1'b1;
-                                cmd_cnt <= cmd_cnt + 1;
                                 cnt <= 0;
-                                state <= VOL_PRE;//waiting for i_DREQ
+                                state <= DATA_PRE;//waiting for i_DREQ
                             end
                             else begin
                                 o_XCS <= 1'b0;
                                 cnt <= cnt + 1;
                                 o_SI <= cmd[31];
-                                cmd <= {cmd[30:0],cmd[31]};
+                                cmd[31:0] <= {cmd[30:0],cmd[31]};//pos operation!
                             end
                         end
                         o_SCK <= ~o_SCK;//时钟信号刷新

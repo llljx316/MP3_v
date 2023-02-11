@@ -20,6 +20,9 @@ wire  o_SCK                                ;
 wire  o_XDCS                               ;
 wire  o_XCS                                ;
 wire  o_XRST                               ;
+wire  o_led_song_select                    ;
+wire  [6:0]  onum                          ;
+wire  [7:0]  odigit                        ;
 
 
 initial
@@ -45,7 +48,10 @@ top  u_top (
     .o_SCK                   ( o_SCK    ),
     .o_XDCS                  ( o_XDCS   ),
     .o_XCS                   ( o_XCS    ),
-    .o_XRST                  ( o_XRST   )
+    .o_XRST                  ( o_XRST   ),
+    .o_led_song_select       ( o_led_song_select        ),
+    .onum                    ( onum               [6:0] ),
+    .odigit                  ( odigit             [7:0] )
 );
 
 // initial

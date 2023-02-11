@@ -32,14 +32,21 @@ module top(
     output wire o_SCK,
     output wire o_XDCS,
     output wire o_XCS,
-    output wire o_XRST
+    output wire o_XRST,
 
+    output wire o_led_song_select,
+    output wire [6:0] onum,          
+    output wire [7:0] odigit 
     );
 
     wire FINISH;
     wire [15:0] vol;
+    wire [15:0] o_vol;
     wire song_select;
+    wire o_song_select;
     wire pause;
+    
+    
 
     bluetooth
     bluetooth_mp3 (
@@ -53,7 +60,9 @@ module top(
         .o_pause                 ( pause               )
     );
 
-    mp3 
+    mp3#(
+        .DELAY_TIME(500000)
+    )
     u_mp3 (
         .clk                     ( clk                    ),
         .rst_n                   ( rst_n                  ),
@@ -68,6 +77,19 @@ module top(
         .o_SI                    ( o_SI                   ),
         .o_XRST                  ( o_XRST                 ),
         .o_LED                   ( o_LED                  ),
-        .o_FINISH                ( finish                 )
+        .o_FINISH                ( finish                 ),
+        .o_vol                  (o_vol          [15:0]),
+        .o_song_select          (o_led_song_select)
     );
+    
+    display_num
+    display_vol(
+        .idata(o_vol),
+
+        .rst_n(rst_n),
+        .clk(clk),
+        .onum(onum),          
+        .odigit(odigit)   
+    );
+    
 endmodule
