@@ -64,7 +64,7 @@ module bluetooth#(
         .o_data(rx_data)
     );
 
-    localparam DELAY_SIGNAL = 5000000;
+    localparam DELAY_SIGNAL = 5000;
     integer cnt = 0;
 
     always@(posedge clk or negedge rst_n) begin
@@ -74,7 +74,6 @@ module bluetooth#(
             o_song_select <= 0;
             o_pre <= 0;
             o_next <= 0;
-	    state  <= CMD_PRE;
             cnt <= 0;
         end
 

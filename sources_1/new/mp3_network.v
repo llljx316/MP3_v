@@ -1,169 +1,212 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 2022/01/04 11:10:45
-// Deo_SIgn Name: 
-// Module Name: mp3
-// Project Name: 
-// Target Devices: 
-// Tool Vero_SIons: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revio_SIon:
-// Revio_SIon 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
 
-//`define test
-module mp3
-#(
-    parameter CMD_NUM=2,
-    parameter DELAY_TIME=500000
-)
-(
-	input clk,
-	//input mp3_clk,
-	input i_DREQ,
-	input rst_n, 
-	//input [2:0] SONG_COL,
-	//input NO_MUo_SIC,
-	output reg o_XDCS, 
-	output reg o_XCS,  
-	output reg o_XRST, 
-	output reg o_SI, 
-	output reg o_SCK,
-    output reg o_LED
+
+`default_nettype wire
+//---------- module for VS1003B control ------------
+// ---------------- author : Dino ------------------
+module mp3(
+	input CLK, // out clk 
+	input DREQ,// sign for input
+	input RST, // active low 
+	input [15:0] vol,// vol control
+	input [2: 0] current, // song choose
+	output reg XDCS, // data control
+	output reg XCS,  // cmd control 
+	output reg RSET, 
+	output reg SI,  // data input
+	output reg SCLK, // clk for VS1003B 
+
+    //for test
+    output reg o_LED,
+    output reg o_FINISH, 
+    output wire [15:0] o_vol,
+    output wire o_song_select
 );
-	//mp3状态
-	localparam CMD_PRE = 0;
-	localparam WRITE_CMD = 1;
-	localparam DATA_PRE = 2;
-	localparam WRITE_DATA = 3;
-	localparam DELAY = 4;
-	reg [2: 0] state;
-		
-	//目前选择的歌曲
-	reg[2: 0] cur=3'b00;
-	
-	// IP核
-    reg[15:0] addr;
-	wire [15: 0] Dout0,Dout1,Dout2,Dout3,Data;
-    reg [15: 0] _Data;
-    
-    blk_mem_gen_0 music0(.clka(clk),.ena(1),.addra(addr),.douta(Dout0));
-    // blk_mem_gen_1 muo_SIc1(.clka(clk),.ena(1),.addra(addr),.douta(Dout1));    
-    // blk_mem_gen_2 muo_SIc2(.clka(clk),.ena(1),.addra(addr),.douta(Dout2));
-    // blk_mem_gen_3 muo_SIc3(.clka(clk),.ena(1),.addra(addr),.douta(Dout3)); 
-    assign Data=Dout0;
-	
-    //复位寄存器
-    reg [63: 0] cmd = {32'h02000804, 32'h020B0000};
-    reg [2: 0] cmd_cnt = 0;
-        
-    //计数
-    integer delay_cnt = 0;
-    integer cnt = 0;
+`define CLK         clk
+`define RST         rst_n
+`define DREQ        i_DREQ
+`define current     i_song_select
+`define XCS         o_XCS
+`define XDCS        o_XDCS
+`define SCLK        o_SCK
+`define SI          o_SI
+`define MP3_RST     o_XRST
 
-    //mp3 clk
-    wire mp3_clk;
-`ifndef test
-    clock_divider#(.Time(10))
-    divider(
-        .clkin(clk),
-        .clkout(mp3_clk)
+	// states 
+	//_PRE states used to waite for DREQ 
+	parameter CMD_PRE = 0;
+	parameter WRITE_CMD = 1;
+	parameter DATA_PRE = 2;
+	parameter WRITE_DATA = 3;
+	parameter DELAY = 4;
+	parameter VOL_PRE = 5;
+	parameter VOL_CHANGE = 6;
+	parameter PAUSE = 7;
+	reg [2: 0] state;
+	
+	// basic parameters
+	parameter DELAY_TIME = 500000;
+	parameter CMD_NUM = 2;
+	
+	// 1M clk for mp3 
+	wire clk_div;
+	clk_wiz_0
+
+    clk_div(
+    // Clock out ports
+    .clk_out1(clk_div),
+    // Status and control signals
+    .resetn(1'b0),
+    // Clock in ports
+    .clk_in1(CLK)
     );
-`else
-    assign mp3_clk = clk;
-`endif
-        
-    always @ (posedge mp3_clk) begin
-        if(!rst_n) begin
-            o_XRST <= 0;
-            o_SCK <= 0;
-            o_XCS <= 1;
-            o_XDCS <= 1;
-            delay_cnt <= 0;
-            state <= DELAY;
-            cmd_cnt <= 0;
-            addr <= 0;
-            o_LED <= 0;
-        end 
-        else begin 
-            o_LED<=1;
-            case (state)
-                CMD_PRE: begin 
-                    o_SCK <= 0;
-                    if(cmd_cnt == CMD_NUM) begin
-                        state <= DATA_PRE;
-                    end
-                    else if(i_DREQ) begin 
-                        state <= WRITE_CMD;
-                        cnt <= 0;
-                    end 
-                end
-                    
-                WRITE_CMD: begin 
-                    if(i_DREQ) begin
-                        if(clk) begin 
-                            if(cnt==32) begin
-                                cmd_cnt <= cmd_cnt+1;
-                                o_XCS <= 1;
-                                state <= CMD_PRE;
-                                cnt <= 0;
-                            end 
-                            else begin
-                                o_XCS <= 0;
-                                o_SI <= cmd[63];
-                                cmd <= {cmd[62: 0], cmd[63]};
-                                cnt <= cnt+1;
-                            end 
-                        end 
-                        o_SCK <= ~o_SCK;
-                    end 
-                end
-                
-                DATA_PRE: begin
-                    if(i_DREQ) begin 
-                        o_SCK <= 0;
-                        state <= WRITE_DATA;
-                        _Data <= Data;
-                        cnt <= 0;
-                    end 
-                end
-                         
-                WRITE_DATA: begin 
-                    if(o_SCK) begin 
-                        if(cnt == 16) begin 
-                            o_XDCS <= 1;
-                            addr <= addr+1;
-                            state <= DATA_PRE;
-                            end 
-                        else begin 
-                            o_XDCS <= 0;
-                            o_SI <= _Data[15];
-                            _Data <= {_Data[14:0], _Data[15]};
-                            cnt <= cnt+1;
-                        end 
-                    end 
-                    o_SCK = ~o_SCK;
-                end
-                 
-                DELAY: begin 
-                    if(delay_cnt == DELAY_TIME) begin 
-			            delay_cnt <= 0;
-                        state <= CMD_PRE;
-                        o_XRST <= 1;
-                    end 
-                    else begin
-						delay_cnt <= delay_cnt+1;
-				    end
-                end    
-            endcase
-        end
-    end 
+	
+	// song select
+	reg[2: 0] pre;
+	reg[11:0] addr;
+	
+	// ip core ROM
+	wire [15: 0] Data;
+	reg [15: 0] _Data;
+    wire [15: 0] dout1,dout2;
+    //blk_mem_gen_0 music0(.clka(clk),.ena(1),.addra(addr),.douta(Dout0));
+    blk_mem_gen_1 music1(.clka(clk),.ena(1),.addra(addr),.douta(dout1));    
+    blk_mem_gen_2 music2(.clka(clk),.ena(1),.addra(addr),.douta(dout2));
+    //blk_mem_gen_3 music3(.clka(clk),.ena(1),.addra(addr),.douta(Dout3)); 
+    //assign Data=NO_MUSIC?{16{1'b0}}:(SONG_COL[2]?Dout3:(SONG_COL[1]?Dout2:(SONG_COL[0]?Dout1:Dout0)));
+    assign Data = current==0?dout1:dout2;
+	
+
+	// cmd register  {soft reset, vol}
+	reg pause_pre;
+	reg [63: 0] cmd_pause = {32'h02000808, 32'h02000800};
+	reg [63: 0] cmd = {32'h02000804, 32'h020B0000};
+	reg [2: 0] cmd_cnt = 0;
+	
+	// vars
+	integer delay_cnt = 0;
+	integer cnt = 0;
+	reg [31: 0] cmd_vol;
+	
+// ------------------------State Machine------------------------
+	always @ (posedge clk_div) begin
+		pre <= current;
+		if(!RST || pre!=current) begin
+			//MP3_RST <= 0;
+			RSET <= 0;
+			SCLK <= 0;
+			XCS <= 1;
+			XDCS <= 1;
+			delay_cnt <= 0;
+			state <= DELAY;
+			cmd_cnt <= 0;
+			addr <= 0;
+			//pause_pre <= 0;
+		end 
+		else begin 
+			case (state)
+				CMD_PRE: begin 
+						SCLK <= 0;
+						if(cmd_cnt == CMD_NUM) begin
+							state <= DATA_PRE;
+						end
+						else if(DREQ) begin 
+							state <= WRITE_CMD;
+							cnt <= 0;
+						end 
+					end
+					
+				WRITE_CMD: begin 
+						if(DREQ) begin
+							if(CLK) begin 
+								if(cnt==32) begin
+									cmd_cnt <= cmd_cnt+1;
+									XCS <= 1;
+									state <= CMD_PRE;
+									cnt <= 0;
+								end 
+								else begin
+									XCS <= 0;
+									SI <= cmd[63];
+									cmd <= {cmd[62: 0], cmd[63]};
+									cnt <= cnt+1;
+								end 
+							end 
+							SCLK <= ~SCLK;
+						end 
+					end 
+					
+				DATA_PRE: begin
+						// detect vol change 
+						if(vol[15:0] != cmd[15: 0]) begin 
+							state <= VOL_PRE;
+							cmd_vol <= {16'h020B, vol};
+							cmd[15: 0] <= vol[15: 0];
+						end 
+						else if(DREQ) begin 
+							SCLK <= 0;
+							state <= WRITE_DATA;
+							_Data <= Data;
+							cnt <= 0;
+						end 
+					end 
+					
+				WRITE_DATA: begin 
+						if(SCLK) begin 
+							// 16 bits one process
+							if(cnt == 16) begin 
+								XDCS <= 1;
+								addr <= addr+1;
+								state <= DATA_PRE;
+							end 
+							else begin 
+								XDCS <= 0;
+								SI <= _Data[15];
+								_Data <= {_Data[14:0], _Data[15]};
+								cnt <= cnt+1;
+							end 
+						end 
+						SCLK = ~SCLK;
+					end 
+				
+				VOL_PRE: begin 
+						if(DREQ) begin
+							state <= VOL_CHANGE;
+							cnt <= 0;
+						end 
+					end
+					
+				VOL_CHANGE: begin 
+						if(DREQ) begin
+							if(SCLK) begin 
+								if(cnt==32) begin
+									XCS <= 1;
+									state <= DATA_PRE;
+									cnt <= 0;
+								end 
+								else begin
+									XCS <= 0;
+									SI <= cmd_vol[31];
+									cmd_vol <= {cmd_vol[30: 0], cmd_vol[31]};
+									cnt <= cnt+1;
+								end 
+							end 
+							SCLK <= ~SCLK;
+						end 
+					end 
+					
+				DELAY: begin 
+						if(delay_cnt == DELAY_TIME) begin 
+							delay_cnt <= 0;
+							//ST <= 1;
+							state <= CMD_PRE;
+							RSET <= 1;
+						end 
+						else delay_cnt <= delay_cnt+1;
+					end 
+				default:;
+				
+			endcase
+		end
+	end 
 endmodule

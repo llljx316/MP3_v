@@ -46,10 +46,6 @@ always@(negedge o_XDCS) begin
         //i_vol = 16'hfcfc;
 	i_pause = 1;
     end
-    else if(cnt==10)begin
-	i_pause=0;
-	$finish;
-    end
     else if(cnt == 25)
         $finish;
     cnt <= cnt + 1;

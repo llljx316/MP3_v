@@ -18,7 +18,7 @@
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
-
+`default_nettype wire
 
 module top(
     input clk,
@@ -36,7 +36,16 @@ module top(
 
     output wire o_led_song_select,
     output wire [6:0] onum,          
-    output wire [7:0] odigit 
+    output wire [7:0] odigit,
+    
+    //vga
+    output wire VGA_HS,
+    output wire VGA_VS,
+    output wire [3:0]VGA_R,
+    output wire [3:0]VGA_G,
+    output wire [3:0]VGA_B,
+    output wire o_next
+    
     );
 
     wire FINISH;
@@ -46,7 +55,7 @@ module top(
     wire o_song_select;
     wire pause;
     
-    
+    wire next,pre;  //indicate change of song
 
     bluetooth
     bluetooth_mp3 (
@@ -57,18 +66,21 @@ module top(
 
         .o_vol                   ( vol          [15:0] ),
         .o_song_select           ( song_select         ),
-        .o_pause                 ( pause               )
+        .o_pause                 ( pause               ),
+        .o_next                  ( next                ),
+        .o_pre                   ( pre                 )
     );
 
     mp3#(
-        .DELAY_TIME(500000)
+        .DELAY_TIME(500000),
+        .CMD_NUM(2)
     )
     u_mp3 (
         .clk                     ( clk                    ),
         .rst_n                   ( rst_n                  ),
         .i_DREQ                  ( i_DREQ                 ),
         .i_vol                   ( vol           [15:0]   ),
-        .i_song_select          ( song_select            ),
+        .i_song_select           ( song_select            ),
         .i_pause                 ( pause                  ),
 
         .o_XCS                   ( o_XCS                  ),
@@ -78,9 +90,24 @@ module top(
         .o_XRST                  ( o_XRST                 ),
         .o_LED                   ( o_LED                  ),
         .o_FINISH                ( finish                 ),
-        .o_vol                  (o_vol          [15:0]),
-        .o_song_select          (o_led_song_select)
+        .o_vol                   (o_vol          [15:0]),
+        .o_song_select           (o_led_song_select)
     );
+
+    assign o_next = next;// for test
+    
+    vga  display_vga (
+    .CLK                     ( clk            ),
+    .RST_BTN                 ( rst_n        ),
+    .i_next                  ( next         ),
+    .i_pre                   ( pre          ),
+
+    .VGA_HS                  ( VGA_HS         ),
+    .VGA_VS                  ( VGA_VS         ),
+    .VGA_R                   ( VGA_R          ),
+    .VGA_G                   ( VGA_G          ),
+    .VGA_B                   ( VGA_B          )
+);
     
     display_num
     display_vol(

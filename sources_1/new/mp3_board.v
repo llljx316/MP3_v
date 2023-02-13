@@ -35,7 +35,7 @@ module mp3
 	output reg SI, 
 	output reg SCLK
 );
-	//mp3çŠ¶æ€
+	//mp3×´Ì¬
 	localparam CMD_PRE = 0;
 	localparam WRITE_CMD = 1;
 	localparam DATA_PRE = 2;
@@ -44,7 +44,7 @@ module mp3
 	reg [2: 0] state;
 		
 	
-	// IPæ ¸
+	// IPºË
     reg[11:0] addr;
 	wire [15: 0] Dout0,Dout1,Dout2,Dout3,Data;
     reg [15: 0] _Data;
@@ -60,11 +60,11 @@ module mp3
     blk_mem_gen_0 music0(.clka(clk),.ena(1),.addra(addr),.douta(Dout0));
     assign Data=Dout0;
 	
-    //å¤ä½å¯„å­˜å™¨
+    //¸´Î»¼Ä´æÆ÷
     reg [63: 0] cmd = {32'h02000804, 32'h020B0000};
     reg [2: 0] cmd_cnt = 0;
         
-    //è®¡æ•°
+    //¼ÆÊı
     integer delay_cnt = 0;
     integer cnt = 0;
         
