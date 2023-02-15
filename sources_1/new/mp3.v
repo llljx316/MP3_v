@@ -41,7 +41,7 @@ module mp3#(
         output reg o_LED,
         output reg o_FINISH,
         output wire [15:0] o_vol,
-        output wire o_song_select
+        output wire [2:0] o_song_select
     );
 
 
@@ -100,7 +100,7 @@ module mp3#(
 
     //core IP
     reg  [14:0] addr;
-    wire [15:0] dout1,dout2;
+    wire [15:0] dout0,dout1,dout2,dout3;
 
     //storage relative
     wire [15:0] data;
@@ -125,6 +125,13 @@ module mp3#(
 		end
 	end
 
+    blk_mem_gen_0 music0(
+        .clka(clk),
+        .ena(1'b1),
+        .addra(addr),
+        .douta(dout0)
+    );
+
     blk_mem_gen_1 music1(
         .clka(clk),
         .ena(1'b1),
@@ -138,9 +145,17 @@ module mp3#(
         .addra(addr),
         .douta(dout2)
     );
+
+    blk_mem_gen_3 music3(
+        .clka(clk),
+        .ena(1'b1),
+        .addra(addr),
+        .douta(dout3)
+    );
+
     //temporary data assign
-    reg song_select;
-    assign data = i_pause==0?(song_select==0?dout1:dout2): 16'h0000;
+    reg [2:0] song_select;
+    assign data = i_pause==0?(song_select==0?dout0:(song_select == 1? dout1:(song_select==2? dout2: dout3))): 16'h0000;
     //assign data = test_data;
     assign o_vol = cmd[15:0];
     assign o_song_select = song_select;
@@ -152,11 +167,11 @@ module mp3#(
     //state machine
     always@(posedge clk_mp3) begin
         //reset
-        if(!rst_n || song_reg2!=song_reg3 /*|| i_pause!=pause*/) begin
+        if(!rst_n || song_reg2!=song_reg3 || i_pause!=pause) begin
             song_select <= i_song_select;
             o_XCS <= 1'b1;
             o_XDCS <= 1'b1;
-            o_XRST <= 1'b0;
+            o_XRST <= 1'b0; 
             o_SCK <= 1'b0;
             
             //??????????????????????????????????????????????????????????????????????
