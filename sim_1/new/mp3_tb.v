@@ -50,7 +50,7 @@ always@(negedge o_XDCS) begin
 	// i_pause=0;
 	// $finish;
     // end
-    else if(cnt == 25)
+    if(cnt == 25)
         $finish;
     cnt <= cnt + 1;
 

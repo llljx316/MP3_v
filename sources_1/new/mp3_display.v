@@ -95,15 +95,15 @@ module mp3_display #(
     wire next1 = (i_x >= SX_NEXT)   & (i_y >= SY       ) & (i_x < (i_y>SY + 2*SQ? SX_NEXT+ SY + 4*SQ - i_y: i_y-SY+SX_NEXT)  ) & (i_y < SY + 4*SQ);
     wire next1_rt = (i_x >= SX_NEXT - 2*SQ) & (i_y >= SY) & (i_x < SX_NEXT - SQ) & (i_y < SY + 4*SQ);
     wire pre1 =  (i_x >= (i_y>SY + 2*SQ? (SX_PRE + i_y - SY - 2*SQ):(SX_PRE + SY + 2*SQ - i_y)))   & (i_y >= SY       ) & (i_x < SX_PRE + 2*SQ) & (i_y < SY + 4*SQ);
-    wire pre1_rt = (i_x >= SX_PRE + 2*SQ + 2*SQ) & (i_y >= SY) & (i_x < SX_PRE+5*SQ) &(i_y < SY+4*SQ);
+    wire pre1_rt = (i_x >= SX_PRE + 2*SQ + SQ) & (i_y >= SY) & (i_x < SX_PRE+4*SQ) &(i_y < SY+4*SQ);
 
     wire square1 = (i_x >= SX-3)    & (i_y >= SY - 3   ) & (i_x < SX + 2*SQ + 3                          ) & (i_y < SY + 4*SQ + 3);
     wire next_square  = (i_x >= SX_NEXT - 2*SQ-3)    & (i_y >= SY - 3   ) & (i_x < SX_NEXT + 2*SQ + 3           ) & (i_y < SY + 4*SQ + 3);
-    wire pre_square  = (i_x >= SX_PRE-3)    & (i_y >= SY - 3   ) & (i_x < SX_PRE + 2*SQ + 3                          ) & (i_y < SY + 4*SQ + 3);
+    wire pre_square  = (i_x >= SX_PRE-3)    & (i_y >= SY - 3   ) & (i_x < SX_PRE + 4*SQ + 3                          ) & (i_y < SY + 4*SQ + 3);
 
     //picture
-    wire vol_plus = (i_x>=SX_VOLPLUS) & (i_x < SX_VOLPLUS+ 30) & (i_y > SY) & (i_y <SY+30);
-    wire vol_dec = (i_x>=SX_VOLDEC) & (i_x < SX_VOLDEC+ 30) & (i_y >= SY) & (i_y < SY+30);
+    wire vol_plus = (i_x>SX_VOLPLUS) & (i_x < SX_VOLPLUS+ 30) & (i_y > SY) & (i_y <SY+30);
+    wire vol_dec = (i_x>SX_VOLDEC) & (i_x < SX_VOLDEC+ 30) & (i_y >= SY) & (i_y < SY+30);
 
     // wire sq_b = (i_x >= SX + 2*SQ) & (i_y >= SY + 2*SQ) & (i_x < SX +  6*SQ) & (i_y < SY +  6*SQ);
     // wire sq_c = (i_x >= SX + 4*SQ) & (i_y >= SY + 4*SQ) & (i_x < SX +  8*SQ) & (i_y < SY +  8*SQ);
@@ -167,7 +167,7 @@ module mp3_display #(
     end
     // Colour Output
     // find the specified color
-    always@(*) begin
+    always@(posedge clk) begin
         if(play1 | next1 | pre1 | next1_rt | pre1_rt) begin
             o_red <= 8'hff;
             o_green <= 8'hff;
