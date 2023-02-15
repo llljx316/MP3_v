@@ -34,3 +34,8 @@ set_property PACKAGE_PIN J15 [get_ports RST_BTN]
 
 set_property IOSTANDARD LVCMOS33 [get_ports o_next]
 set_property PACKAGE_PIN K15 [get_ports o_next]
+
+set_property IOSTANDARD LVCMOS33 [get_ports i_next]
+set_property IOSTANDARD LVCMOS33 [get_ports i_pre]
+set_property PACKAGE_PIN L16 [get_ports i_next]
+set_property PACKAGE_PIN M13 [get_ports i_pre]

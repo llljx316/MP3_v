@@ -115,19 +115,24 @@ module vga(
         .H_RES(640),    // horizontal resolution
         .V_RES(480)     // vertical resolution
     )
-    test_mp3 (
+    mp3_show_vga (
         .clk(CLK),
         .rst_n(RST_BTN),
         .i_x(sx),
         .i_y(sy),
         .i_next(i_next),
         .i_pre(i_pre),
+        .i_vol_plus(),
+        .i_vol_dec(),
 
         .o_red(red),
         .o_green(green),
         .o_blue(blue)
 
     );
+    // always @(sy)
+    //     if(sy == 300)
+    //     $finish;
 
     assign VGA_R    = de ? red[7:4] : 4'b0;
     assign VGA_G    = de ? green[7:4] : 4'b0;

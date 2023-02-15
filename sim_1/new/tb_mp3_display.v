@@ -46,10 +46,14 @@ mp3_display  u_mp3_display (
 
 initial
 begin
-    #(PERIOD*6) i_next = 1;
-    #(PERIOD) i_next = 0;
+    // #(PERIOD*6) i_next = 1;
+    // #(PERIOD) i_next = 0;
     //#(PERIOD*80) i_pre = 1;
     //#(PERIOD) i_pre = 0;
+    #(PERIOD*6) i_x = 80;
+    i_y = 350;
+    repeat(120)
+    #(PERIOD) i_x = i_x + 1;
     $finish;
 end
 

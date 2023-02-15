@@ -30,6 +30,9 @@ module mp3_display #(
         input wire signed [15:0] i_y,
         input wire i_next,
         input wire i_pre,
+        input wire i_vol_plus,
+        input wire i_vol_dec,
+
         output reg [7:0] o_red,
         output reg [7:0] o_green,
         output reg [7:0] o_blue
@@ -40,9 +43,12 @@ module mp3_display #(
     localparam BW = 16;                 // border width
     localparam SQ = VR >> 6;            // square unit
     localparam SX = (HR >> 1);   // middle of the picture
-    localparam SY = (VR >> 1 + SQ * 3);   // square start vertical
+    localparam SY = ((VR >> 1) + (VR >> 3));   // square start vertical
     localparam SX_NEXT = (HR>>1)+(SQ<<4);
-    localparam SX_PRE  = (HR>>1)-(SQ<<4); 
+    localparam SX_PRE  = (HR>>1)-(SQ<<4);   //next begin
+    localparam SX_VOLPLUS = (HR>>1)+(SQ<<5);
+    localparam SX_VOLDEC = (HR>>1)-(SQ<<5);
+
     localparam LS = 2;                  // line spacing
     wire [7:0] color_square [0:2];
 
@@ -56,15 +62,33 @@ module mp3_display #(
     // wire lft = (i_x >=     0) & (i_y >=     0) & (i_x < BW) & (i_y < VR);
     // wire rgt = (i_x >= HR-BW) & (i_y >=     0) & (i_x < HR) & (i_y < VR);
 
+    //picture vol
+    reg [14:0]addr;
+    wire dout_dec;
+    vol_dec_mem
+    pic_vol_dec(
+        .clka(clk),
+        .ena(1),
+        .wea(),
+        .addra(addr),
+        .dina(),
+        .douta(dout_dec)
+    );
+
     // triangle
     wire play1 = (i_x >= SX)        & (i_y >= SY       ) & (i_x < (i_y>SY + 2*SQ? SX+ SY + 4*SQ - i_y: i_y-SY+SX)            ) & (i_y < SY + 4*SQ);
     wire next1 = (i_x >= SX_NEXT)   & (i_y >= SY       ) & (i_x < (i_y>SY + 2*SQ? SX_NEXT+ SY + 4*SQ - i_y: i_y-SY+SX_NEXT)  ) & (i_y < SY + 4*SQ);
     wire next1_rt = (i_x >= SX_NEXT - 2*SQ) & (i_y >= SY) & (i_x < SX_NEXT - SQ) & (i_y < SY + 4*SQ);
-    wire pre1 =  (i_x >= (i_y>SY + 2*SQ? SX_PRE + i_y - SY - 2*SQ:SX_PRE + SY + 2*SQ - i_y))   & (i_y >= SY       ) & (i_x < (i_y>SX_PRE + 2*SQ) & (i_y < SY + 4*SQ));
+    wire pre1 =  (i_x >= (i_y>SY + 2*SQ? (SX_PRE + i_y - SY - 2*SQ):(SX_PRE + SY + 2*SQ - i_y)))   & (i_y >= SY       ) & (i_x < SX_PRE + 2*SQ) & (i_y < SY + 4*SQ);
+    wire pre1_rt = (i_x >= SX_PRE + 2*SQ + 2*SQ) & (i_y >= SY) & (i_x < SX_PRE+5*SQ) &(i_y < SY+4*SQ);
 
     wire square1 = (i_x >= SX-3)    & (i_y >= SY - 3   ) & (i_x < SX + 2*SQ + 3                          ) & (i_y < SY + 4*SQ + 3);
     wire next_square  = (i_x >= SX_NEXT - 2*SQ-3)    & (i_y >= SY - 3   ) & (i_x < SX_NEXT + 2*SQ + 3           ) & (i_y < SY + 4*SQ + 3);
     wire pre_square  = (i_x >= SX_PRE-3)    & (i_y >= SY - 3   ) & (i_x < SX_PRE + 2*SQ + 3                          ) & (i_y < SY + 4*SQ + 3);
+
+    //picture
+    wire vol_plus = (i_x>=SX_VOLPLUS) & (i_x < SX_VOLPLUS+ 30) & (i_y > SY) & (i_y <SY+30);
+    wire vol_dec = (i_x>=SX_VOLDEC) & (i_x < SX_VOLDEC+ 30) & (i_y >= SY) & (i_y < SY+30);
 
     // wire sq_b = (i_x >= SX + 2*SQ) & (i_y >= SY + 2*SQ) & (i_x < SX +  6*SQ) & (i_y < SY +  6*SQ);
     // wire sq_c = (i_x >= SX + 4*SQ) & (i_y >= SY + 4*SQ) & (i_x < SX +  8*SQ) & (i_y < SY +  8*SQ);
@@ -91,6 +115,7 @@ module mp3_display #(
         if(~rst_n) begin
             state = 0;
             cnt<=0;
+            //addr <=0;
         end
         else begin
             case(state)
@@ -127,7 +152,7 @@ module mp3_display #(
     // Colour Output
     // find the specified color
     always@(*) begin
-        if(play1 | next1 | pre1 | next1_rt) begin
+        if(play1 | next1 | pre1 | next1_rt | pre1_rt) begin
             o_red <= 8'hff;
             o_green <= 8'hff;
             o_blue <= 8'hff;
@@ -136,6 +161,19 @@ module mp3_display #(
             o_red <= color_square[0];
             o_green <= color_square[1];
             o_blue <= color_square[2];
+        end
+        else if(vol_dec) begin
+            addr <= (i_y-SY) * (32) + i_x - SX_VOLDEC ;
+            if(dout_dec == 0) begin
+                o_red <= 8'hff;
+                o_blue <= 8'hff;
+                o_green <= 8'hff;
+            end
+            else begin
+                o_red <= 8'h00;
+                o_green <= 8'h00;
+                o_blue <= 8'h00;
+            end
         end
         else begin
             o_red <= 8'h00;
