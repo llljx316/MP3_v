@@ -51,11 +51,12 @@ module top(
     wire FINISH;
     wire [15:0] vol;
     wire [15:0] o_vol;
-    wire song_select;
+    wire [2:0] song_select;
     wire o_song_select;
     wire pause;
     
     wire next,pre;  //indicate change of song
+    wire vol_plus,vol_dec;
 
     bluetooth
     bluetooth_mp3 (
@@ -68,11 +69,13 @@ module top(
         .o_song_select           ( song_select         ),
         .o_pause                 ( pause               ),
         .o_next                  ( next                ),
-        .o_pre                   ( pre                 )
+        .o_pre                   ( pre                 ),
+        .o_vol_plus              ( vol_plus            ),
+        .o_vol_dec               ( vol_dec             )
     );
 
     mp3#(
-        .DELAY_TIME(500000),
+        .DELAY_TIME(50000),
         .CMD_NUM(2)
     )
     u_mp3 (
@@ -101,6 +104,8 @@ module top(
     .RST_BTN                 ( rst_n        ),
     .i_next                  ( next         ),
     .i_pre                   ( pre          ),
+    .i_vol_plus              ( vol_plus     ),
+    .i_vol_dec               ( vol_dec      ),
 
     .VGA_HS                  ( VGA_HS         ),
     .VGA_VS                  ( VGA_VS         ),
@@ -108,6 +113,7 @@ module top(
     .VGA_G                   ( VGA_G          ),
     .VGA_B                   ( VGA_B          )
 );
+    
     
     display_num
     display_vol(

@@ -21,7 +21,7 @@
 
 
 module bluetooth#(
-    parameter SONG_NUM = 2
+    parameter SONG_NUM = 4
 )(
     input clk,
     input rst_n,
@@ -30,10 +30,12 @@ module bluetooth#(
 
 
     output reg [15:0] o_vol,
-    output reg [4:0] o_song_select,
+    output reg [2:0] o_song_select,
     output reg o_next,
     output reg o_pre,
-    output reg o_pause
+    output reg o_pause,
+    output reg o_vol_plus,
+    output reg o_vol_dec
     );
 
     //---------------state-------------------//
@@ -74,7 +76,9 @@ module bluetooth#(
             o_song_select <= 0;
             o_pre <= 0;
             o_next <= 0;
-	    state  <= CMD_PRE;
+            o_vol_dec <= 0;
+            o_vol_plus <= 0;
+	        state  <= CMD_PRE;
             cnt <= 0;
         end
 
@@ -84,6 +88,8 @@ module bluetooth#(
                 CMD_PRE: begin
                     o_next <= 0;
                     o_pre <= 0;// for display
+                    o_vol_plus <= 0;
+                    o_vol_dec <= 0;
                     if(rx_done) begin
                         state <= rx_data;
                     end
@@ -109,13 +115,15 @@ module bluetooth#(
                 VOL_PLUS:begin
                     o_vol[7:0] <= (o_vol[7:0]>0? o_vol[7:0]-VOL_CHANGE: 0);
                     o_vol[15:8] <= (o_vol[15:8]>0? o_vol[15:8]-VOL_CHANGE: 0);
-                    state <= CMD_PRE;
+                    o_vol_plus <= 1;
+                    state <= DELAY;
                 end
 
                 VOL_DEC: begin
                     o_vol[7:0] <= (o_vol[7:0]< (8'hfc)? o_vol[7:0]+VOL_CHANGE: 8'hfc);
                     o_vol[15:8] <= (o_vol[15:8]< (8'hfc)? o_vol[15:8]+VOL_CHANGE: 8'hfc);
-                    state <= CMD_PRE;
+                    state <= DELAY;
+                    o_vol_dec <= 1;
                 end
 
                 MUSIC0:begin

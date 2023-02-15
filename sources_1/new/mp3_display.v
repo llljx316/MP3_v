@@ -43,7 +43,7 @@ module mp3_display #(
     localparam BW = 16;                 // border width
     localparam SQ = VR >> 6;            // square unit
     localparam SX = (HR >> 1);   // middle of the picture
-    localparam SY = ((VR >> 1) + (VR >> 3));   // square start vertical
+    localparam SY = ((VR >> 1) + (VR >> 2));   // square start vertical
     localparam SX_NEXT = (HR>>1)+(SQ<<4);
     localparam SX_PRE  = (HR>>1)-(SQ<<4);   //next begin
     localparam SX_VOLPLUS = (HR>>1)+(SQ<<5);
@@ -65,6 +65,7 @@ module mp3_display #(
     //picture vol
     reg [14:0]addr;
     wire dout_dec;
+    wire dout_plus;
     vol_dec_mem
     pic_vol_dec(
         .clka(clk),
@@ -74,6 +75,20 @@ module mp3_display #(
         .dina(),
         .douta(dout_dec)
     );
+    //plus mem
+    vol_plus_mem
+    pic_vol_plus(
+        .clka(clk),
+        .ena(1),
+        .wea(),
+        .addra(addr),
+        .dina(),
+        .douta(dout_plus)
+    );
+
+    //choose
+    //wire dout = (vol_dec? dout_dec: dout_plus);
+    //wire dout = dout_dec;
 
     // triangle
     wire play1 = (i_x >= SX)        & (i_y >= SY       ) & (i_x < (i_y>SY + 2*SQ? SX+ SY + 4*SQ - i_y: i_y-SY+SX)            ) & (i_y < SY + 4*SQ);
@@ -111,6 +126,7 @@ module mp3_display #(
     localparam DELAY = 1;
     reg [1:0] state = 0;
     reg next,pre;
+    //wire vol_sx = (vol_dec?SX_VOLDEC:SX_VOLPLUS);
     always@(posedge clk or negedge rst_n) begin
         if(~rst_n) begin
             state = 0;
@@ -163,6 +179,7 @@ module mp3_display #(
             o_blue <= color_square[2];
         end
         else if(vol_dec) begin
+            
             addr <= (i_y-SY) * (32) + i_x - SX_VOLDEC ;
             if(dout_dec == 0) begin
                 o_red <= 8'hff;
@@ -170,11 +187,41 @@ module mp3_display #(
                 o_green <= 8'hff;
             end
             else begin
-                o_red <= 8'h00;
-                o_green <= 8'h00;
-                o_blue <= 8'h00;
+                if(i_vol_dec)begin
+                    o_red <= color_square[0];
+                    o_green <= color_square[1];
+                    o_blue <= color_square[2];
+                end
+                else begin
+                    o_red <= 8'h00;
+                    o_green <= 8'h00;
+                    o_blue <= 8'h00;
+                end
             end
         end
+        
+        else if(vol_plus) begin
+            
+            addr <= (i_y-SY) * (32) +( i_x - SX_VOLPLUS );
+            if(dout_plus == 0) begin
+                o_red <= 8'hff;
+                o_blue <= 8'hff;
+                o_green <= 8'hff;
+            end
+            else begin
+                if(i_vol_plus)begin
+                    o_red <= color_square[0];
+                    o_green <= color_square[1];
+                    o_blue <= color_square[2];
+                end
+                else begin
+                    o_red <= 8'h00;
+                    o_green <= 8'h00;
+                    o_blue <= 8'h00;
+                end
+            end
+        end
+
         else begin
             o_red <= 8'h00;
             o_green <= 8'h00;

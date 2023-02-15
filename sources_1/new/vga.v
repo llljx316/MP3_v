@@ -25,6 +25,8 @@ module vga(
     input  wire RST_BTN,            // reset button
     input  wire i_next,
     input  wire i_pre,
+    input  wire i_vol_plus,
+    input  wire i_vol_dec,
     
     output wire VGA_HS,             // horizontal sync output
     output wire VGA_VS,             // vertical sync output
@@ -122,17 +124,17 @@ module vga(
         .i_y(sy),
         .i_next(i_next),
         .i_pre(i_pre),
-        .i_vol_plus(),
-        .i_vol_dec(),
+        .i_vol_plus(i_vol_plus),
+        .i_vol_dec(i_vol_dec),
 
         .o_red(red),
         .o_green(green),
         .o_blue(blue)
 
     );
-    // always @(sy)
-    //     if(sy == 300)
-    //     $finish;
+    always @(sy)
+        if(sy == 360)
+        $finish;
 
     assign VGA_R    = de ? red[7:4] : 4'b0;
     assign VGA_G    = de ? green[7:4] : 4'b0;
