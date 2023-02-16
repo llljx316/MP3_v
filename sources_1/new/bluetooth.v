@@ -67,7 +67,7 @@ module bluetooth#(
         .o_data(rx_data)
     );
 
-    localparam DELAY_SIGNAL = 5000000;
+    localparam DELAY_SIGNAL = 50000000;
     integer cnt = 0;
 
     wire [7:0] vol1 = (vol_level==8)?8'hfc:(8'd14*vol_level);

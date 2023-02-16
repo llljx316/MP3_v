@@ -44,7 +44,8 @@ module top(
     output wire [3:0]VGA_R,
     output wire [3:0]VGA_G,
     output wire [3:0]VGA_B,
-    output wire o_next
+    output wire o_next,
+    output reg  [7:0]o_vol_led
     
     );
 
@@ -116,7 +117,7 @@ module top(
         .o_song_select           (o_led_song_select       ),
         .addra                   ( addra                  ),
         .dina                    ( dina                   ),
-        .o_finish_song           ( finish_song            )
+        .o_finish_song           ( finish_song            )  
         //.clka                    ( clka                   )
     );
 
@@ -151,7 +152,8 @@ module top(
         .pre                     ( pre           ),
 
         .minute                  ( minute  [7:0] ),
-        .second                  ( second  [7:0] )
+        .second                  ( second  [7:0] ),
+        .i_finish_song           ( finish_song           )
 
     );
 
@@ -166,6 +168,22 @@ module top(
         .onum(onum),          
         .odigit(odigit)  
     );
+
+    //vol_led
+    wire [4:0]vol_led_level = 8-vol_level; 
+    always@(vol_led_level) begin
+        case(vol_led_level)
+            0: o_vol_led <= 8'b0;
+            1: o_vol_led <= 8'b1;
+            2: o_vol_led <= 8'b11;
+            3: o_vol_led <= 8'b111;
+            4: o_vol_led <= 8'b1111;
+            5: o_vol_led <= 8'b11111;
+            6: o_vol_led <= 8'b111111;
+            7: o_vol_led <= 8'b1111111;
+            default: o_vol_led <= 8'b11111111;
+        endcase
+    end
 
 
 endmodule

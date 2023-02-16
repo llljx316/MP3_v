@@ -70,7 +70,7 @@ module mp3_display #(
     assign color_vol[2]    = 4'hf;
 
 
-    wire vol_display_level = 8-vol_level;                                                                                                                                                                     
+    wire [4:0]vol_display_level = 8-vol_level;                                                                                                                                                                     
 
     // Borders
     // wire top = (i_x >=     0) & (i_y >=     0) & (i_x < HR) & (i_y < BW);
@@ -126,10 +126,10 @@ module mp3_display #(
 
     //vol_sqaure
     reg [7:0] vol_sqaure;
-    always@(vol_display_level) begin
+    always@(*) begin
         case(vol_display_level)
-            0: vol_sqaure <= 0;
-            1: vol_sqaure <= 1;
+            0: vol_sqaure <= 8'b0;
+            1: vol_sqaure <= 8'b1;
             2: vol_sqaure <= 8'b11;
             3: vol_sqaure <= 8'b111;
             4: vol_sqaure <= 8'b1111;
@@ -242,6 +242,7 @@ module mp3_display #(
     // find the specified color
     //  buf
     reg [3:0] red_buf,green_buf,blue_buf;
+    reg [4:0] get_color_delay_cnt = 0;
     //integer color_cnt = 0;//用于图像转文字
     always@(negedge clk) begin
         //rst
@@ -249,6 +250,8 @@ module mp3_display #(
             o_red <= 4'hf;
             o_green <= 4'hf;
             o_blue <= 4'hf;
+            get_color_delay_cnt <= 0;
+
         end
 
         //next pre
@@ -311,9 +314,12 @@ module mp3_display #(
                 o_blue <= {doutb[11:8]};
             end
             else if(addrb == display_cnt) begin
-                color_round[0] <=  {doutb[3:0]};
-                color_round[1] <=  {doutb[7:4]};
-                color_round[2] <=  {doutb[11:8]};
+                if(get_color_delay_cnt == 0) begin
+                    color_round[0] <=  {doutb[3:0]};
+                    color_round[1] <=  {doutb[7:4]};
+                    color_round[2] <=  {doutb[11:8]};//happy mode模式
+                end
+                get_color_delay_cnt <= get_color_delay_cnt + 1;
 
             end
             else begin
@@ -323,29 +329,23 @@ module mp3_display #(
             end
         end
 
-        //vol_display
-        else if(i_vol_dec| i_vol_dec) begin
-            if((vol_sqaure[0]&&vol1_display) || (vol_sqaure[1]&&vol2_display) || (vol_sqaure[2]&&vol3_display)
-            || (vol_sqaure[3]&&vol4_display) || (vol_sqaure[4]&&vol5_display) || (vol_sqaure[5]&&vol6_display) 
-            || (vol_sqaure[6]&&vol7_display) || (vol_sqaure[7]&&vol8_display)) begin
-                o_red   <= color_vol[0];
-                o_green <= color_vol[1];
-                o_blue  <= color_vol[2];
-
-            end
-            else begin 
-                o_red <= 4'h0;
-                o_green <= 4'h0;
-                o_blue <= 4'h0;
-            end
-
-        end
+        
 
         else if(square_top|square_bottom|square_left|square_right) begin
             o_red <= color_round[0];
             o_green <= color_round[1];
             o_blue <= color_round[2];
         end
+
+        //vol_display
+        else if((i_vol_dec| i_vol_plus) &&((vol_sqaure[0]&&vol1_display) || (vol_sqaure[1]&&vol2_display) || (vol_sqaure[2]&&vol3_display)
+        || (vol_sqaure[3]&&vol4_display) || (vol_sqaure[4]&&vol5_display) || (vol_sqaure[5]&&vol6_display) 
+        || (vol_sqaure[6]&&vol7_display) || (vol_sqaure[7]&&vol8_display)) ) begin                    
+            o_red   <= color_vol[0];
+            o_green <= color_vol[1];
+            o_blue  <= color_vol[2];
+        end
+
 
         else begin
             o_red <= 4'h0;

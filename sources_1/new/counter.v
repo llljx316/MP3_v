@@ -25,10 +25,10 @@ module counter(
     input wire rst_n,
     input next,
     input pre,
+    input i_finish_song,
 
     output reg [7:0] minute,
     output reg [7:0] second
-    //output reg o_finish_song
     );
 
 
@@ -40,30 +40,24 @@ module counter(
         .clkout(clk_second)
     );
 
-    always@(posedge clk_second or negedge rst_n or posedge next or posedge pre) begin
-        if(~rst_n | next | pre) begin
+    always@(posedge clk_second or negedge rst_n or posedge next or posedge pre or posedge i_finish_song) begin
+        if(~rst_n | next | pre |i_finish_song) begin
             minute <= 0;
             second <= 0;
             //o_finish_song <= 0;
         end
         else begin
-            if(minute == 1 & second == 15)begin 
-                //o_finish_song <= 1;
-                minute <= 0;
-                second <= 0;
+        
+            if(second == 59) begin
+                second<=0;
+                minute <= minute + 1;
             end
-            else begin
-                if(second == 59) begin
-                    second<=0;
-                    minute <= minute + 1;
-                end
 
-                else begin 
-                    //o_finish_song <= 0;
-                    second <= second + 1;
-                end
+            else begin 
+                //o_finish_song <= 0;
+                second <= second + 1;
             end
-        end 
+        end
 
     end
 endmodule

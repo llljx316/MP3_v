@@ -22,7 +22,7 @@
 //`define test_audio
 
 module mp3#(
-    parameter DELAY_TIME = 50000,
+    parameter DELAY_TIME = 500,
     parameter CMD_NUM = 2,
     parameter SONG_SIZE = 5000
 )(
@@ -49,7 +49,7 @@ module mp3#(
 
 
 
-`ifndef test
+
     reg clk_mp3;//2hz
     wire clk_temp;//8hz
 
@@ -71,7 +71,7 @@ module mp3#(
     );
 
     integer clk_cnt = 0;
-    always@(posedge clk_temp) begin
+    always@(posedge clk_temp or negedge rst_n) begin
         if(~rst_n) begin
             clk_cnt <=0;
             clk_mp3 <= 0;
@@ -83,14 +83,6 @@ module mp3#(
         else clk_cnt <= clk_cnt + 1;
 
     end
-
-`else
-    integer div_cnt = 0;
-    reg clk_mp3 = 0;
-    always @(posedge clk) begin
-        clk_mp3 <= ~clk_mp3;
-    end
-`endif
 
     //states
     localparam CMD_PRE = 0;
@@ -156,7 +148,7 @@ module mp3#(
 
     //temporary data assign
     reg [2:0] song_select;
-    assign data =(song_select==0?dout0:(song_select == 1? dout1:(song_select==2? dout2: dout3)));
+    assign data =(~i_pause)?(song_select==0?dout0:(song_select == 1? dout1:(song_select==2? dout2: dout3))):8'h0000;
     //assign data = test_data;
     assign o_vol = cmd[15:0];
     assign o_song_select = song_select;
@@ -173,7 +165,7 @@ module mp3#(
     //state machine
     always@(posedge clk_mp3 or negedge rst_n) begin
         //reset
-        if(!rst_n || song_select!=i_song_select || i_pause!=pause) begin
+        if(!rst_n || song_select!=i_song_select) begin
             song_select <= i_song_select;
                 o_XCS <= 1'b1;
                 o_XDCS <= 1'b1;
