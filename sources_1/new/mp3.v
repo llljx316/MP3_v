@@ -22,14 +22,14 @@
 //`define test_audio
 
 module mp3#(
-    parameter DELAY_TIME = 500000,
+    parameter DELAY_TIME = 50000,
     parameter CMD_NUM = 2
 )(
         input clk,
         input  rst_n,
         //input  i_SO,             //芯片的输出信??
         input  i_DREQ,           //执行信号
-        input  i_song_select,
+        input  [2:0] i_song_select,
         input  i_pause,
         input  [15:0] i_vol,
 
@@ -39,15 +39,18 @@ module mp3#(
         output reg o_SI,
         output reg o_XRST,
         output reg o_LED,
-        output reg o_FINISH,
         output wire [15:0] o_vol,
-        output wire [2:0] o_song_select
+        output wire [2:0] o_song_select,
+        output wire [14:0] addra,
+        output wire [15:0] dina,
+        output wire clka
     );
 
 
 
 `ifndef test
-    wire clk_mp3;
+    reg clk_mp3;//2hz
+    wire clk_temp;//8hz
 
     // clock_divider#(.Time(10))
     // clk_10(
@@ -59,12 +62,27 @@ module mp3#(
 
     clk_div(
     // Clock out ports
-    .clk_out1(clk_mp3),
+    .clk_out1(clk_temp),
     // Status and control signals
     .resetn(1'b1),
     // Clock in ports
     .clk_in1(clk)
     );
+
+    integer clk_cnt = 0;
+    always@(posedge clk_temp) begin
+        if(~rst_n) begin
+            clk_cnt <=0;
+            clk_mp3 <= 0;
+        end
+        else if(clk_cnt == 2) begin
+            clk_mp3 <= ~clk_mp3;
+            clk_cnt <= 0;
+        end
+        else clk_cnt <= clk_cnt + 1;
+
+    end
+
 `else
     integer div_cnt = 0;
     reg clk_mp3 = 0;
@@ -88,7 +106,7 @@ module mp3#(
     //commands
     //first command: new mode and soft reset
     //second command: biggest volume
-    reg [63:0] cmd = {32'h02000804,32'h020B0000};
+    reg [63:0] cmd;
     //reg [31:0] vol_cmd ;
     reg [15:0] vol;
 
@@ -155,11 +173,16 @@ module mp3#(
 
     //temporary data assign
     reg [2:0] song_select;
-    assign data = i_pause==0?(song_select==0?dout0:(song_select == 1? dout1:(song_select==2? dout2: dout3))): 16'h0000;
+    assign data =(song_select==0?dout0:(song_select == 1? dout1:(song_select==2? dout2: dout3)));
     //assign data = test_data;
     assign o_vol = cmd[15:0];
     assign o_song_select = song_select;
     reg pause;
+
+    
+    //pic
+    assign addra = addr;
+    assign dina = data;
     
 
     reg [15:0] _Data;
@@ -167,30 +190,30 @@ module mp3#(
     //state machine
     always@(posedge clk_mp3) begin
         //reset
-        if(!rst_n || song_reg2!=song_reg3 || i_pause!=pause) begin
+        if(!rst_n || song_select!=i_song_select || i_pause!=pause) begin
             song_select <= i_song_select;
             o_XCS <= 1'b1;
             o_XDCS <= 1'b1;
             o_XRST <= 1'b0; 
             o_SCK <= 1'b0;
+            cmd <=  {32'h02000804,16'h020B,i_vol};
             
             //??????????????????????????????????????????????????????????????????????
             addr <= 0;//??????
             pause <= i_pause;
             //????????????????????????????????????????????????????????????????
-           
+            //
             
             cmd_cnt <= 0;
             cnt <= 0;
             delay_cnt <= 0;
             state <= DELAY;
             o_LED <= 1'b0;
-            o_FINISH <= 1'b1;//song切换后的信号
             //delay_cnt1 <= 0;
         end
         else begin
             o_LED <= 1'b1;
-            o_FINISH <= 0;
+            //o_FINISH <= 0;
             case (state)
                 CMD_PRE: begin
                     o_SCK <= 0;
@@ -330,5 +353,7 @@ module mp3#(
             //
         end
     end
+
+    
 
 endmodule

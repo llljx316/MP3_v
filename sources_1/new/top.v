@@ -34,7 +34,7 @@ module top(
     output wire o_XCS,
     output wire o_XRST,
 
-    output wire o_led_song_select,
+    output wire [1:0] o_led_song_select,
     output wire [6:0] onum,          
     output wire [7:0] odigit,
     
@@ -48,7 +48,6 @@ module top(
     
     );
 
-    wire FINISH;
     wire [15:0] vol;
     wire [15:0] o_vol;
     wire [2:0] song_select;
@@ -63,7 +62,6 @@ module top(
         .clk                     ( clk                   ),
         .rst_n                   ( rst_n                 ),
         .rx                      ( rx                    ),
-        .i_FINISH                ( FINISH                ),
 
         .o_vol                   ( vol          [15:0] ),
         .o_song_select           ( song_select         ),
@@ -74,8 +72,25 @@ module top(
         .o_vol_dec               ( vol_dec             )
     );
 
+    //picmem
+    wire clka,clkb;
+    wire [14:0] addra,addrb;
+    wire [15:0] dina,doutb;
+    blk_mem_gen_buf_audio_pic 
+    pic_ram(
+        .clka(clk),
+        .ena(1),
+        .wea(1),
+        .addra(addra),
+        .dina(dina),
+        .clkb(clk),
+        .enb(1),
+        .addrb(addrb),
+        .doutb(doutb)
+    );
+
     mp3#(
-        .DELAY_TIME(50000),
+        .DELAY_TIME(2000),
         .CMD_NUM(2)
     )
     u_mp3 (
@@ -92,27 +107,32 @@ module top(
         .o_SI                    ( o_SI                   ),
         .o_XRST                  ( o_XRST                 ),
         .o_LED                   ( o_LED                  ),
-        .o_FINISH                ( finish                 ),
         .o_vol                   (o_vol          [15:0]),
-        .o_song_select           (o_led_song_select)
+        .o_song_select           (o_led_song_select       ),
+        .addra                   ( addra                  ),
+        .dina                    ( dina                   )
+        //.clka                    ( clka                   )
     );
 
     assign o_next = next;// for test
     
     vga  display_vga (
-    .CLK                     ( clk            ),
-    .RST_BTN                 ( rst_n        ),
-    .i_next                  ( next         ),
-    .i_pre                   ( pre          ),
-    .i_vol_plus              ( vol_plus     ),
-    .i_vol_dec               ( vol_dec      ),
+        .CLK                     ( clk            ),
+        .RST_BTN                 ( rst_n        ),
+        .i_next                  ( next         ),
+        .i_pre                   ( pre          ),
+        .i_vol_plus              ( vol_plus     ),
+        .i_vol_dec               ( vol_dec      ),
+        .doutb                   ( doutb          ),
 
-    .VGA_HS                  ( VGA_HS         ),
-    .VGA_VS                  ( VGA_VS         ),
-    .VGA_R                   ( VGA_R          ),
-    .VGA_G                   ( VGA_G          ),
-    .VGA_B                   ( VGA_B          )
-);
+        .VGA_HS                  ( VGA_HS         ),
+        .VGA_VS                  ( VGA_VS         ),
+        .VGA_R                   ( VGA_R          ),
+        .VGA_G                   ( VGA_G          ),
+        .VGA_B                   ( VGA_B          ),
+        .addrb                   ( addrb          )
+    );
+
     
     
     display_num
@@ -122,7 +142,8 @@ module top(
         .rst_n(rst_n),
         .clk(clk),
         .onum(onum),          
-        .odigit(odigit)   
+        .odigit(odigit)  
     );
-    
+
+
 endmodule

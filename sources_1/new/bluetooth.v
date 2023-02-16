@@ -26,7 +26,6 @@ module bluetooth#(
     input clk,
     input rst_n,
     input rx,
-    input i_FINISH,
 
 
     output reg [15:0] o_vol,
@@ -71,7 +70,7 @@ module bluetooth#(
 
     always@(posedge clk or negedge rst_n) begin
         if(~rst_n) begin
-            o_vol <= 16'h0000;
+            o_vol <= 0000;
             o_pause <= 0;
             o_song_select <= 0;
             o_pre <= 0;
@@ -101,7 +100,7 @@ module bluetooth#(
                 end
 
                 NEXT:begin
-                    o_song_select <= o_song_select<SONG_NUM?o_song_select+1:0;
+                    o_song_select <= o_song_select<SONG_NUM-1?o_song_select+1:0;
                     state <= DELAY;
                     o_next <= 1;
                 end

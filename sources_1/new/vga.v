@@ -27,12 +27,14 @@ module vga(
     input  wire i_pre,
     input  wire i_vol_plus,
     input  wire i_vol_dec,
+    input  wire [15:0] doutb,
     
     output wire VGA_HS,             // horizontal sync output
     output wire VGA_VS,             // vertical sync output
     output wire [3:0] VGA_R,        // 4-bit VGA red output
     output wire [3:0] VGA_G,        // 4-bit VGA green output
-    output wire [3:0] VGA_B         // 4-bit VGA blue output
+    output wire [3:0] VGA_B,        // 4-bit VGA blue output
+    output wire [14:0] addrb
     );
     
      // Display Clocks
@@ -126,10 +128,13 @@ module vga(
         .i_pre(i_pre),
         .i_vol_plus(i_vol_plus),
         .i_vol_dec(i_vol_dec),
+        .doutb( doutb          ),
+        .i_vs( VGA_VS          ),
 
         .o_red(red),
         .o_green(green),
-        .o_blue(blue)
+        .o_blue(blue),
+        .addrb( addrb          )
 
     );
     always @(sy)

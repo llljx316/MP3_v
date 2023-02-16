@@ -62,7 +62,8 @@ set_property PACKAGE_PIN T14 [get_ports {odigit[5]}]
 set_property PACKAGE_PIN K2 [get_ports {odigit[6]}]
 set_property PACKAGE_PIN U13 [get_ports {odigit[7]}]
 
-set_property IOSTANDARD LVCMOS33 [get_ports o_led_song_select]
+set_property IOSTANDARD LVCMOS33 [get_ports {o_led_song_select[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {o_led_song_select[0]}]
 set_property PACKAGE_PIN V11 [get_ports o_led_song_select]
 
 #vga
@@ -98,3 +99,6 @@ set_property PACKAGE_PIN B12 [get_ports VGA_VS]
 #others
 set_property IOSTANDARD LVCMOS33 [get_ports o_next]
 set_property PACKAGE_PIN K15 [get_ports o_next]
+
+set_property PACKAGE_PIN V11 [get_ports {o_led_song_select[1]}]
+set_property PACKAGE_PIN V12 [get_ports {o_led_song_select[0]}]

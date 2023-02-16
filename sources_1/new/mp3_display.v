@@ -32,10 +32,14 @@ module mp3_display #(
         input wire i_pre,
         input wire i_vol_plus,
         input wire i_vol_dec,
+        input wire [15:0] doutb,
+        input wire i_vs,
+        
 
         output reg [7:0] o_red,
         output reg [7:0] o_green,
-        output reg [7:0] o_blue
+        output reg [7:0] o_blue,
+        output reg [14:0] addrb
     );
 
     localparam HR = H_RES;              // horizontal resolution (pixels)
@@ -105,6 +109,11 @@ module mp3_display #(
     wire vol_plus = (i_x>SX_VOLPLUS) & (i_x < SX_VOLPLUS+ 30) & (i_y > SY) & (i_y <SY+30);
     wire vol_dec = (i_x>SX_VOLDEC) & (i_x < SX_VOLDEC+ 30) & (i_y >= SY) & (i_y < SY+30);
 
+    //mem_pic
+    wire music_pic = (i_x>=SX-100)&(i_x<SX+100) & (i_y >= SY - 250) & (i_y <SY - 50);
+
+    
+
     // wire sq_b = (i_x >= SX + 2*SQ) & (i_y >= SY + 2*SQ) & (i_x < SX +  6*SQ) & (i_y < SY +  6*SQ);
     // wire sq_c = (i_x >= SX + 4*SQ) & (i_y >= SY + 4*SQ) & (i_x < SX +  8*SQ) & (i_y < SY +  8*SQ);
     // wire sq_d = (i_x >= SX + 6*SQ) & (i_y >= SY + 6*SQ) & (i_x < SX + 10*SQ) & (i_y < SY + 10*SQ);
@@ -121,6 +130,7 @@ module mp3_display #(
     // wire lns_8 = (i_y >=        SY) & (i_y <= SY +  2*SQ) & ((i_x == SX + 8*SQ + 3*LS) | (i_x == SX + 10*SQ - 3*LS));
 
     integer cnt = 0;
+    reg[31:0] display_cnt;
     localparam DELAY_TIME = 50;//test
     localparam BEG = 0;
     localparam DELAY = 1;
@@ -129,9 +139,10 @@ module mp3_display #(
     //wire vol_sx = (vol_dec?SX_VOLDEC:SX_VOLPLUS);
     always@(posedge clk or negedge rst_n) begin
         if(~rst_n) begin
-            state = 0;
+            state <= 0;
             cnt<=0;
-            //addr <=0;
+            //display_cnt <= 0;
+           
         end
         else begin
             case(state)
@@ -160,14 +171,29 @@ module mp3_display #(
                 else 
                     cnt <= cnt+1;
             end
+
+            
+
             default:;
             endcase
         end
     
     end
+
+    //每一次增加
+    integer display_delay_cnt =0 ;
+    always@(negedge clk or negedge rst_n) begin
+        if(~rst_n | next | pre) begin display_cnt <= 0; display_delay_cnt <=0 ;end
+        else if(display_delay_cnt == 1000000)  begin 
+            display_cnt <= display_cnt + 16'h1;
+            display_delay_cnt <= 0;
+        end
+        else display_delay_cnt <= display_delay_cnt + 1;
+    end
+
     // Colour Output
     // find the specified color
-    always@(posedge clk) begin
+    always@(negedge clk) begin
         if(play1 | next1 | pre1 | next1_rt | pre1_rt) begin
             o_red <= 8'hff;
             o_green <= 8'hff;
@@ -179,8 +205,8 @@ module mp3_display #(
             o_blue <= color_square[2];
         end
         else if(vol_dec) begin
-            
             addr <= (i_y-SY) * (32) + i_x - SX_VOLDEC ;
+
             if(dout_dec == 0) begin
                 o_red <= 8'hff;
                 o_blue <= 8'hff;
@@ -219,6 +245,20 @@ module mp3_display #(
                     o_green <= 8'h00;
                     o_blue <= 8'h00;
                 end
+            end
+        end
+
+        else if(music_pic) begin
+            addrb <= ((i_x -(SX-100)) >> 2) + ((i_y -(SY-250)) >> 2)* 50;
+            if(addrb <= display_cnt[19:5]) begin
+                o_red <= {doutb[3:0],4'h0};
+                o_green <= {doutb[7:4],4'h0};
+                o_blue <= {doutb[11:8],4'h0};
+            end
+            else begin
+                o_red <= 8'h00;
+                o_green <= 8'h00;
+                o_blue <= 8'h00;
             end
         end
 
