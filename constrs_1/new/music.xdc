@@ -102,3 +102,4 @@ set_property PACKAGE_PIN K15 [get_ports o_next]
 
 set_property PACKAGE_PIN V11 [get_ports {o_led_song_select[1]}]
 set_property PACKAGE_PIN V12 [get_ports {o_led_song_select[0]}]
+

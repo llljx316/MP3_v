@@ -23,7 +23,8 @@
 
 module mp3#(
     parameter DELAY_TIME = 50000,
-    parameter CMD_NUM = 2
+    parameter CMD_NUM = 2,
+    parameter SONG_SIZE = 5000
 )(
         input clk,
         input  rst_n,
@@ -43,7 +44,7 @@ module mp3#(
         output wire [2:0] o_song_select,
         output wire [14:0] addra,
         output wire [15:0] dina,
-        output wire clka
+        output reg o_finish_song
     );
 
 
@@ -99,7 +100,7 @@ module mp3#(
     localparam DELAY = 4;
     localparam VOL_PRE = 5;
     localparam WRITE_VOL = 6;
-    localparam VERIFY    = 7;
+    localparam RESET = 7;
 
     reg [2:0] state;
 
@@ -124,24 +125,6 @@ module mp3#(
     wire [15:0] data;
     //reg [15:0] test_data = 16'hfefe;
 
-    reg song_reg0, song_reg1, song_reg2, song_reg3;
-
-    always@(posedge clk_mp3 or negedge rst_n) begin
-		if(!rst_n) begin
-			song_reg0 <= 1'b0;
-			song_reg1 <= 1'b0;
-			song_reg2 <= 1'b0;
-			song_reg3 <= 1'b0;
-		end
-
-		else begin
-			//move
-			song_reg0 <= i_song_select;
-			song_reg1 <= song_reg0;
-			song_reg2 <= song_reg1;
-			song_reg3 <= song_reg2;
-		end
-	end
 
     blk_mem_gen_0 music0(
         .clka(clk),
@@ -186,35 +169,32 @@ module mp3#(
     
 
     reg [15:0] _Data;
-    localparam VOL_CMD_TIMES = 2;
+    localparam VOL_CMD_TIMES = 1;
     //state machine
-    always@(posedge clk_mp3) begin
+    always@(posedge clk_mp3 or negedge rst_n) begin
         //reset
         if(!rst_n || song_select!=i_song_select || i_pause!=pause) begin
             song_select <= i_song_select;
-            o_XCS <= 1'b1;
-            o_XDCS <= 1'b1;
-            o_XRST <= 1'b0; 
-            o_SCK <= 1'b0;
-            cmd <=  {32'h02000804,16'h020B,i_vol};
-            
-            //??????????????????????????????????????????????????????????????????????
-            addr <= 0;//??????
-            pause <= i_pause;
-            //????????????????????????????????????????????????????????????????
-            //
-            
-            cmd_cnt <= 0;
-            cnt <= 0;
-            delay_cnt <= 0;
-            state <= DELAY;
-            o_LED <= 1'b0;
-            //delay_cnt1 <= 0;
+                o_XCS <= 1'b1;
+                o_XDCS <= 1'b1;
+                o_XRST <= 1'b0; 
+                o_SCK <= 1'b0;
+                cmd <=  {32'h02000804,16'h020B,i_vol};
+                addr <= 0;
+                pause <= i_pause;
+                o_finish_song <= 0;
+                cmd_cnt <= 0;
+                cnt <= 0;
+                delay_cnt <= 0;
+                state <= DELAY;
+                o_LED <= 1'b0;
+                //delay_cnt1 <= 0;
         end
         else begin
+            
             o_LED <= 1'b1;
-            //o_FINISH <= 0;
             case (state)
+
                 CMD_PRE: begin
                     o_SCK <= 0;
                     if(cmd_cnt == CMD_NUM) begin
@@ -256,6 +236,11 @@ module mp3#(
                         state <= VOL_PRE;
                         cmd[15:0]  <= i_vol;
                         cmd_cnt <= 0;           //clear unpredictable status?
+                    end
+
+                    else if(addr > SONG_SIZE) begin
+                        o_finish_song <= 1;
+                        state <= DELAY;
                     end
 
                     else if(i_DREQ) begin
@@ -349,9 +334,9 @@ module mp3#(
 
 
             endcase
-            
-            //
         end
+        
+        //
     end
 
     

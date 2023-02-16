@@ -22,7 +22,7 @@
 
 module clock_divider#(parameter Time=2)//分频器
 (
-    input clkin,
+    input wire clkin,
     output reg clkout
 );
     integer counter=0;

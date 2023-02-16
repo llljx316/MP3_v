@@ -26,9 +26,11 @@ module bluetooth#(
     input clk,
     input rst_n,
     input rx,
+    input i_finish_song,
 
 
-    output reg [15:0] o_vol,
+    output wire [15:0] o_vol,
+    output reg [3:0] vol_level,
     output reg [2:0] o_song_select,
     output reg o_next,
     output reg o_pre,
@@ -68,9 +70,12 @@ module bluetooth#(
     localparam DELAY_SIGNAL = 5000000;
     integer cnt = 0;
 
+    wire [7:0] vol1 = (vol_level==8)?8'hfc:(8'd14*vol_level);
+    assign o_vol = {vol1,vol1};
+
     always@(posedge clk or negedge rst_n) begin
         if(~rst_n) begin
-            o_vol <= 0000;
+            vol_level <= 0;
             o_pause <= 0;
             o_song_select <= 0;
             o_pre <= 0;
@@ -92,6 +97,10 @@ module bluetooth#(
                     if(rx_done) begin
                         state <= rx_data;
                     end
+
+                    else if(i_finish_song) begin
+                        state<=NEXT;
+                    end
                 end
 
                 PAUSE: begin
@@ -102,7 +111,8 @@ module bluetooth#(
                 NEXT:begin
                     o_song_select <= o_song_select<SONG_NUM-1?o_song_select+1:0;
                     state <= DELAY;
-                    o_next <= 1;
+                    if(~i_finish_song)
+                        o_next <= 1;
                 end
 
                 PRE:begin
@@ -112,15 +122,13 @@ module bluetooth#(
                 end
 
                 VOL_PLUS:begin
-                    o_vol[7:0] <= (o_vol[7:0]>0? o_vol[7:0]-VOL_CHANGE: 0);
-                    o_vol[15:8] <= (o_vol[15:8]>0? o_vol[15:8]-VOL_CHANGE: 0);
+                    vol_level <= (vol_level==0?0:vol_level - 1);
                     o_vol_plus <= 1;
                     state <= DELAY;
                 end
 
                 VOL_DEC: begin
-                    o_vol[7:0] <= (o_vol[7:0]< (8'hfc)? o_vol[7:0]+VOL_CHANGE: 8'hfc);
-                    o_vol[15:8] <= (o_vol[15:8]< (8'hfc)? o_vol[15:8]+VOL_CHANGE: 8'hfc);
+                    vol_level <= (vol_level==8?8:vol_level + 1);
                     state <= DELAY;
                     o_vol_dec <= 1;
                 end

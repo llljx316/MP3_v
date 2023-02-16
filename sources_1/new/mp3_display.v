@@ -34,11 +34,12 @@ module mp3_display #(
         input wire i_vol_dec,
         input wire [15:0] doutb,
         input wire i_vs,
-        
+        input wire [3:0] vol_level,
+        input wire i_finish_song,
 
-        output reg [7:0] o_red,
-        output reg [7:0] o_green,
-        output reg [7:0] o_blue,
+        output reg [3:0] o_red,
+        output reg [3:0] o_green,
+        output reg [3:0] o_blue,
         output reg [14:0] addrb
     );
 
@@ -52,13 +53,24 @@ module mp3_display #(
     localparam SX_PRE  = (HR>>1)-(SQ<<4);   //next begin
     localparam SX_VOLPLUS = (HR>>1)+(SQ<<5);
     localparam SX_VOLDEC = (HR>>1)-(SQ<<5);
+    localparam SX_VOL_DISPLAY = SX_VOLPLUS + (SQ<<2);
+    localparam SY_VOL_DISPLAY_BOTTOM = SY - SQ;
 
     localparam LS = 2;                  // line spacing
-    wire [7:0] color_square [0:2];
+    wire [3:0] color_square [0:2];
+    wire [3:0] color_vol    [0:2];
+    reg  [3:0] color_round  [0:2];        
 
-    assign color_square[0] = 8'hff;
-    assign color_square[1] = 8'hff;
-    assign color_square[2] = 8'h00;
+    assign color_square[0] = 4'hf;
+    assign color_square[1] = 4'hf;
+    assign color_square[2] = 4'h0;
+
+    assign color_vol[0]    = 4'hf;
+    assign color_vol[1]    = 4'hf;
+    assign color_vol[2]    = 4'hf;
+
+
+    wire vol_display_level = 8-vol_level;                                                                                                                                                                     
 
     // Borders
     // wire top = (i_x >=     0) & (i_y >=     0) & (i_x < HR) & (i_y < BW);
@@ -106,11 +118,43 @@ module mp3_display #(
     wire pre_square  = (i_x >= SX_PRE-3)    & (i_y >= SY - 3   ) & (i_x < SX_PRE + 4*SQ + 3                          ) & (i_y < SY + 4*SQ + 3);
 
     //picture
-    wire vol_plus = (i_x>SX_VOLPLUS) & (i_x < SX_VOLPLUS+ 30) & (i_y > SY) & (i_y <SY+30);
-    wire vol_dec = (i_x>SX_VOLDEC) & (i_x < SX_VOLDEC+ 30) & (i_y >= SY) & (i_y < SY+30);
+    wire vol_plus = (i_x>SX_VOLPLUS+3) & (i_x < SX_VOLPLUS+ 30) & (i_y > SY) & (i_y <SY+30);
+    wire vol_dec = (i_x>SX_VOLDEC+3) & (i_x < SX_VOLDEC+ 30) & (i_y >= SY) & (i_y < SY+30);
 
     //mem_pic
     wire music_pic = (i_x>=SX-100)&(i_x<SX+100) & (i_y >= SY - 250) & (i_y <SY - 50);
+
+    //vol_sqaure
+    reg [7:0] vol_sqaure;
+    always@(vol_display_level) begin
+        case(vol_display_level)
+            0: vol_sqaure <= 0;
+            1: vol_sqaure <= 1;
+            2: vol_sqaure <= 8'b11;
+            3: vol_sqaure <= 8'b111;
+            4: vol_sqaure <= 8'b1111;
+            5: vol_sqaure <= 8'b11111;
+            6: vol_sqaure <= 8'b111111;
+            7: vol_sqaure <= 8'b1111111;
+            default: vol_sqaure <= 8'b11111111;
+        endcase
+    end
+
+    wire vol1_display = (i_x>=SX_VOL_DISPLAY    ) & (i_x<SX_VOL_DISPLAY + SQ*2  ) & (i_y >= SY_VOL_DISPLAY_BOTTOM - SQ    ) & (i_y < SY_VOL_DISPLAY_BOTTOM            );
+    wire vol2_display = (i_x>=SX_VOL_DISPLAY    ) & (i_x<SX_VOL_DISPLAY + SQ*2  ) & (i_y >= SY_VOL_DISPLAY_BOTTOM - SQ*3  ) & (i_y < SY_VOL_DISPLAY_BOTTOM - SQ*2     );
+    wire vol3_display = (i_x>=SX_VOL_DISPLAY    ) & (i_x<SX_VOL_DISPLAY + SQ*2  ) & (i_y >= SY_VOL_DISPLAY_BOTTOM - SQ*5  ) & (i_y < SY_VOL_DISPLAY_BOTTOM - SQ*4     );
+    wire vol4_display = (i_x>=SX_VOL_DISPLAY    ) & (i_x<SX_VOL_DISPLAY + SQ*2  ) & (i_y >= SY_VOL_DISPLAY_BOTTOM - SQ*7  ) & (i_y < SY_VOL_DISPLAY_BOTTOM - SQ*6     );
+    wire vol5_display = (i_x>=SX_VOL_DISPLAY    ) & (i_x<SX_VOL_DISPLAY + SQ*2  ) & (i_y >= SY_VOL_DISPLAY_BOTTOM - SQ*9  ) & (i_y < SY_VOL_DISPLAY_BOTTOM - SQ*8     );
+    wire vol6_display = (i_x>=SX_VOL_DISPLAY    ) & (i_x<SX_VOL_DISPLAY + SQ*2  ) & (i_y >= SY_VOL_DISPLAY_BOTTOM - SQ*11 ) & (i_y < SY_VOL_DISPLAY_BOTTOM - SQ*10    );
+    wire vol7_display = (i_x>=SX_VOL_DISPLAY    ) & (i_x<SX_VOL_DISPLAY + SQ*2  ) & (i_y >= SY_VOL_DISPLAY_BOTTOM - SQ*13 ) & (i_y < SY_VOL_DISPLAY_BOTTOM - SQ*12    );
+    wire vol8_display = (i_x>=SX_VOL_DISPLAY    ) & (i_x<SX_VOL_DISPLAY + SQ*2  ) & (i_y >= SY_VOL_DISPLAY_BOTTOM - SQ*15 ) & (i_y < SY_VOL_DISPLAY_BOTTOM - SQ*14    );
+
+    wire square_top = (i_y>0)&(i_y<15);
+    wire square_left = (i_x>0)&(i_x<15);
+    wire square_right = (i_x>HR-15)&(i_x<HR);
+    wire square_bottom = (i_y > VR - 15) & (i_y < VR );
+
+
 
     
 
@@ -183,8 +227,11 @@ module mp3_display #(
     //每一次增加
     integer display_delay_cnt =0 ;
     always@(negedge clk or negedge rst_n) begin
-        if(~rst_n | next | pre) begin display_cnt <= 0; display_delay_cnt <=0 ;end
-        else if(display_delay_cnt == 1000000)  begin 
+        if(~rst_n | next | pre | i_finish_song) begin 
+            display_cnt <= 0; 
+            display_delay_cnt <=0 ;
+        end
+        else if(display_delay_cnt == 3000000)  begin 
             display_cnt <= display_cnt + 16'h1;
             display_delay_cnt <= 0;
         end
@@ -193,24 +240,32 @@ module mp3_display #(
 
     // Colour Output
     // find the specified color
+    //  buf
+    reg [3:0] red_buf,green_buf,blue_buf;
+    //integer color_cnt = 0;//用于图像转文字
     always@(negedge clk) begin
+        //rst
         if(play1 | next1 | pre1 | next1_rt | pre1_rt) begin
-            o_red <= 8'hff;
-            o_green <= 8'hff;
-            o_blue <= 8'hff;
+            o_red <= 4'hf;
+            o_green <= 4'hf;
+            o_blue <= 4'hf;
         end
+
+        //next pre
         else if((next & next_square ) | (pre & pre_square)) begin
             o_red <= color_square[0];
             o_green <= color_square[1];
             o_blue <= color_square[2];
         end
+
+        //voldec pic
         else if(vol_dec) begin
             addr <= (i_y-SY) * (32) + i_x - SX_VOLDEC ;
 
             if(dout_dec == 0) begin
-                o_red <= 8'hff;
-                o_blue <= 8'hff;
-                o_green <= 8'hff;
+                o_red <= 4'hf;
+                o_blue <= 4'hf;
+                o_green <= 4'hf;
             end
             else begin
                 if(i_vol_dec)begin
@@ -219,9 +274,9 @@ module mp3_display #(
                     o_blue <= color_square[2];
                 end
                 else begin
-                    o_red <= 8'h00;
-                    o_green <= 8'h00;
-                    o_blue <= 8'h00;
+                    o_red <= 4'h0;
+                    o_green <= 4'h0;
+                    o_blue <= 4'h0;
                 end
             end
         end
@@ -230,9 +285,9 @@ module mp3_display #(
             
             addr <= (i_y-SY) * (32) +( i_x - SX_VOLPLUS );
             if(dout_plus == 0) begin
-                o_red <= 8'hff;
-                o_blue <= 8'hff;
-                o_green <= 8'hff;
+                o_red <= 4'hf;
+                o_blue <= 4'hf;
+                o_green <= 4'hf;
             end
             else begin
                 if(i_vol_plus)begin
@@ -241,31 +296,61 @@ module mp3_display #(
                     o_blue <= color_square[2];
                 end
                 else begin
-                    o_red <= 8'h00;
-                    o_green <= 8'h00;
-                    o_blue <= 8'h00;
+                    o_red <= 4'h0;
+                    o_green <= 4'h0;
+                    o_blue <= 4'h0;
                 end
             end
         end
 
         else if(music_pic) begin
             addrb <= ((i_x -(SX-100)) >> 2) + ((i_y -(SY-250)) >> 2)* 50;
-            if(addrb <= display_cnt[19:5]) begin
-                o_red <= {doutb[3:0],4'h0};
-                o_green <= {doutb[7:4],4'h0};
-                o_blue <= {doutb[11:8],4'h0};
+            if(addrb < display_cnt) begin
+                o_red <= {doutb[3:0]};
+                o_green <= {doutb[7:4]};
+                o_blue <= {doutb[11:8]};
+            end
+            else if(addrb == display_cnt) begin
+                color_round[0] <=  {doutb[3:0]};
+                color_round[1] <=  {doutb[7:4]};
+                color_round[2] <=  {doutb[11:8]};
+
             end
             else begin
-                o_red <= 8'h00;
-                o_green <= 8'h00;
-                o_blue <= 8'h00;
+                o_red <= 4'h0;
+                o_green <= 4'h0;
+                o_blue <= 4'h0;
             end
         end
 
+        //vol_display
+        else if(i_vol_dec| i_vol_dec) begin
+            if((vol_sqaure[0]&&vol1_display) || (vol_sqaure[1]&&vol2_display) || (vol_sqaure[2]&&vol3_display)
+            || (vol_sqaure[3]&&vol4_display) || (vol_sqaure[4]&&vol5_display) || (vol_sqaure[5]&&vol6_display) 
+            || (vol_sqaure[6]&&vol7_display) || (vol_sqaure[7]&&vol8_display)) begin
+                o_red   <= color_vol[0];
+                o_green <= color_vol[1];
+                o_blue  <= color_vol[2];
+
+            end
+            else begin 
+                o_red <= 4'h0;
+                o_green <= 4'h0;
+                o_blue <= 4'h0;
+            end
+
+        end
+
+        else if(square_top|square_bottom|square_left|square_right) begin
+            o_red <= color_round[0];
+            o_green <= color_round[1];
+            o_blue <= color_round[2];
+        end
+
         else begin
-            o_red <= 8'h00;
-            o_green <= 8'h00;
-            o_blue <= 8'h00;
+            o_red <= 4'h0;
+            o_green <= 4'h0;
+            o_blue <= 4'h0;
         end
     end
 endmodule

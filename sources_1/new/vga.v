@@ -28,6 +28,8 @@ module vga(
     input  wire i_vol_plus,
     input  wire i_vol_dec,
     input  wire [15:0] doutb,
+    input wire [3:0] vol_level,
+    input wire i_finish_song,
     
     output wire VGA_HS,             // horizontal sync output
     output wire VGA_VS,             // vertical sync output
@@ -103,9 +105,9 @@ module vga(
     assign VGA_HS=hs;
     assign VGA_VS=vs;
 
-    wire [7:0]red;
-    wire [7:0] green;
-    wire [7:0] blue;
+    wire [3:0]red;
+    wire [3:0] green;
+    wire [3:0] blue;
 /*
     test_card_simple(
         .i_x(sx),
@@ -130,6 +132,8 @@ module vga(
         .i_vol_dec(i_vol_dec),
         .doutb( doutb          ),
         .i_vs( VGA_VS          ),
+        .vol_level (vol_level),
+        .i_finish_song(i_finish_song),
 
         .o_red(red),
         .o_green(green),
@@ -141,9 +145,9 @@ module vga(
         if(sy == 360)
         $finish;
 
-    assign VGA_R    = de ? red[7:4] : 4'b0;
-    assign VGA_G    = de ? green[7:4] : 4'b0;
-    assign VGA_B    = de ? blue[7:4] : 4'b0;
+    assign VGA_R    = de ? red : 4'b0;
+    assign VGA_G    = de ? green : 4'b0;
+    assign VGA_B    = de ? blue : 4'b0;
 
     // assign VGA_R    = de ? 4'b1111 : 4'b0;
     // assign VGA_G    = de ? 4'b0 : 4'b0;

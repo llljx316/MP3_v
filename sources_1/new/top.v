@@ -56,13 +56,17 @@ module top(
     
     wire next,pre;  //indicate change of song
     wire vol_plus,vol_dec;
+    wire finish_song;
+    wire [3:0] vol_level;
 
     bluetooth
     bluetooth_mp3 (
         .clk                     ( clk                   ),
         .rst_n                   ( rst_n                 ),
         .rx                      ( rx                    ),
+        .i_finish_song           ( finish_song           ),
 
+        .vol_level               ( vol_level             ),
         .o_vol                   ( vol          [15:0] ),
         .o_song_select           ( song_select         ),
         .o_pause                 ( pause               ),
@@ -89,6 +93,7 @@ module top(
         .doutb(doutb)
     );
 
+
     mp3#(
         .DELAY_TIME(2000),
         .CMD_NUM(2)
@@ -110,7 +115,8 @@ module top(
         .o_vol                   (o_vol          [15:0]),
         .o_song_select           (o_led_song_select       ),
         .addra                   ( addra                  ),
-        .dina                    ( dina                   )
+        .dina                    ( dina                   ),
+        .o_finish_song           ( finish_song            )
         //.clka                    ( clka                   )
     );
 
@@ -124,6 +130,8 @@ module top(
         .i_vol_plus              ( vol_plus     ),
         .i_vol_dec               ( vol_dec      ),
         .doutb                   ( doutb          ),
+        .i_finish_song           ( finish_song           ),
+        .vol_level               ( vol_level    ),
 
         .VGA_HS                  ( VGA_HS         ),
         .VGA_VS                  ( VGA_VS         ),
@@ -133,11 +141,25 @@ module top(
         .addrb                   ( addrb          )
     );
 
-    
+    wire [7:0] minute, second;
+    wire [15:0] dtime;
+
+    counter  u_counter (
+        .clk                     ( clk           ),
+        .rst_n                   ( rst_n         ),
+        .next                    ( next          ),
+        .pre                     ( pre           ),
+
+        .minute                  ( minute  [7:0] ),
+        .second                  ( second  [7:0] )
+
+    );
+
+    assign dtime = minute*100+second;
     
     display_num
     display_vol(
-        .idata(o_vol),
+        .idata(dtime),
 
         .rst_n(rst_n),
         .clk(clk),
