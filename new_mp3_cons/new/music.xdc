@@ -21,6 +21,8 @@ set_property IOSTANDARD LVCMOS33 [get_ports o_LED]
 
 set_property IOSTANDARD LVCMOS33 [get_ports clk]
 set_property PACKAGE_PIN E3 [get_ports clk]
+create_clock -period 10.000 -name sys_clk_pin -waveform {0.000 5.000} -add [get_ports clk]
+
 
 set_property IOSTANDARD LVCMOS33 [get_ports rx]
 set_property PACKAGE_PIN J3 [get_ports rx]
@@ -92,6 +94,15 @@ set_property PACKAGE_PIN A5 [get_ports {VGA_G[2]}]
 set_property PACKAGE_PIN C6 [get_ports {VGA_G[3]}]
 set_property PACKAGE_PIN B11 [get_ports VGA_HS]
 set_property PACKAGE_PIN B12 [get_ports VGA_VS]
+
+##Accelerometer
+
+set_property -dict {PACKAGE_PIN E15 IOSTANDARD LVCMOS33} [get_ports ACL_MISO]
+set_property -dict {PACKAGE_PIN F14 IOSTANDARD LVCMOS33} [get_ports ACL_MOSI]
+set_property -dict {PACKAGE_PIN F15 IOSTANDARD LVCMOS33} [get_ports ACL_SCLK]
+set_property -dict {PACKAGE_PIN D15 IOSTANDARD LVCMOS33} [get_ports ACL_CSN]
+set_property -dict {PACKAGE_PIN B13 IOSTANDARD LVCMOS33} [get_ports ACL_INT1]
+set_property -dict {PACKAGE_PIN C16 IOSTANDARD LVCMOS33} [get_ports ACL_INT2]
 
 #others
 set_property IOSTANDARD LVCMOS33 [get_ports o_next]
