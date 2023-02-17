@@ -242,7 +242,7 @@ module get_acl_data(
                             STATE <= state_type_recieving;
                             inst <= INST_READ;
                             rdh_wrl <= 1;
-                            reg_addr <= 8'h08;
+                            reg_addr <= 8'h09;
 
                             ready <= 1;
                             //transmit <= 1'b1;
@@ -252,7 +252,7 @@ module get_acl_data(
                         state_type_recieving : begin
                             ready <= 0;
                             case (reg_addr)
-                                8'h08 ://ZÖá
+                                8'h09 ://YÖá
                                     begin
                                         if (din_valid == 1'b1)
                                         begin
