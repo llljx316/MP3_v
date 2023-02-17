@@ -14,12 +14,12 @@ module SPI_transmitter(
     
     // Control port
     input            ready,
-    input      [7:0] inst,
+    input      [7:0] inst,      //指令
     input            rdh_wrl,
-    input      [7:0] reg_addr,
-    input      [7:0] dout,
-    output reg [7:0] din,
-    output reg       din_valid
+    input      [7:0] reg_addr,  //寄存器地址
+    input      [7:0] dout,      //写的内容
+    output reg [7:0] din,       //输出的内容
+    output reg       din_valid  //输出的东西是否可信
 );
 
     //时钟生成器

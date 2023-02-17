@@ -56,7 +56,7 @@ module tb_accel;
         reset = 1'b1;
         #1000
         reset = 1'b0;
-        /*
+        
         // Testing command 0x000A2057
         // Send a number 0 into uart
         RXD_buf = 10'b0000011001;
@@ -121,82 +121,82 @@ module tb_accel;
             repeat(867) @(posedge clock);
             {RXD, RXD_buf} = {RXD_buf, 1'b1};
         end
-        */
+        
         // Testing command 0x010B2000, return 0xAA in SPI
         // Send a number 0 into uart
-        RXD_buf = 10'b0000011001;
-        RTS = 1'b0;
-        repeat(10) begin
-            repeat(867) @(posedge clock);
-            {RXD, RXD_buf} = {RXD_buf, 1'b1};
-        end
+        // RXD_buf = 10'b0000011001;
+        // RTS = 1'b0;
+        // repeat(10) begin
+        //     repeat(867) @(posedge clock);
+        //     {RXD, RXD_buf} = {RXD_buf, 1'b1};
+        // end
         
-        // Send a number 1 into uart
-        RXD_buf = 10'b0100011001;
-        RTS = 1'b0;
-        repeat(10) begin
-            repeat(867) @(posedge clock);
-            {RXD, RXD_buf} = {RXD_buf, 1'b1};
-        end
+        // // Send a number 1 into uart
+        // RXD_buf = 10'b0100011001;
+        // RTS = 1'b0;
+        // repeat(10) begin
+        //     repeat(867) @(posedge clock);
+        //     {RXD, RXD_buf} = {RXD_buf, 1'b1};
+        // end
         
-        // Send a number 0 into uart
-        RXD_buf = 10'b0000011001;
-        RTS = 1'b0;
-        repeat(10) begin
-            repeat(867) @(posedge clock);
-            {RXD, RXD_buf} = {RXD_buf, 1'b1};
-        end
+        // // Send a number 0 into uart
+        // RXD_buf = 10'b0000011001;
+        // RTS = 1'b0;
+        // repeat(10) begin
+        //     repeat(867) @(posedge clock);
+        //     {RXD, RXD_buf} = {RXD_buf, 1'b1};
+        // end
         
-        // Send a number B into uart
-        RXD_buf = 10'b0010000101;
-        RTS = 1'b0;
-        repeat(10) begin
-            repeat(867) @(posedge clock);
-            {RXD, RXD_buf} = {RXD_buf, 1'b1};
-        end
+        // // Send a number B into uart
+        // RXD_buf = 10'b0010000101;
+        // RTS = 1'b0;
+        // repeat(10) begin
+        //     repeat(867) @(posedge clock);
+        //     {RXD, RXD_buf} = {RXD_buf, 1'b1};
+        // end
         
-        // Send a number 2 into uart
-        RXD_buf = 10'b0010011001;
-        RTS = 1'b0;
-        repeat(10) begin
-            repeat(867) @(posedge clock);
-            {RXD, RXD_buf} = {RXD_buf, 1'b1};
-        end
+        // // Send a number 2 into uart
+        // RXD_buf = 10'b0010011001;
+        // RTS = 1'b0;
+        // repeat(10) begin
+        //     repeat(867) @(posedge clock);
+        //     {RXD, RXD_buf} = {RXD_buf, 1'b1};
+        // end
         
-        // Send a number 0 into uart
-        RXD_buf = 10'b0000011001;
-        RTS = 1'b0;
-        repeat(10) begin
-            repeat(867) @(posedge clock);
-            {RXD, RXD_buf} = {RXD_buf, 1'b1};
-        end
+        // // Send a number 0 into uart
+        // RXD_buf = 10'b0000011001;
+        // RTS = 1'b0;
+        // repeat(10) begin
+        //     repeat(867) @(posedge clock);
+        //     {RXD, RXD_buf} = {RXD_buf, 1'b1};
+        // end
         
-        // Send a number 0 into uart
-        RXD_buf = 10'b0000011001;
-        RTS = 1'b0;
-        repeat(10) begin
-            repeat(867) @(posedge clock);
-            {RXD, RXD_buf} = {RXD_buf, 1'b1};
-        end
+        // // Send a number 0 into uart
+        // RXD_buf = 10'b0000011001;
+        // RTS = 1'b0;
+        // repeat(10) begin
+        //     repeat(867) @(posedge clock);
+        //     {RXD, RXD_buf} = {RXD_buf, 1'b1};
+        // end
         
-        // Send a number 0 into uart
-        RXD_buf = 10'b0000011001;
-        RTS = 1'b0;
-        repeat(10) begin
-            repeat(867) @(posedge clock);
-            {RXD, RXD_buf} = {RXD_buf, 1'b1};
-        end
+        // // Send a number 0 into uart
+        // RXD_buf = 10'b0000011001;
+        // RTS = 1'b0;
+        // repeat(10) begin
+        //     repeat(867) @(posedge clock);
+        //     {RXD, RXD_buf} = {RXD_buf, 1'b1};
+        // end
         
-        // Take 16 bits from MOSI, and send 8 bits to MISO
-        repeat(16) begin
-            @(posedge ACL_SCLK)
-            ACL_MOSI_buf = {ACL_MOSI_buf[14:0], ACL_MOSI};
-        end
+        // // Take 16 bits from MOSI, and send 8 bits to MISO
+        // repeat(16) begin
+        //     @(posedge ACL_SCLK)
+        //     ACL_MOSI_buf = {ACL_MOSI_buf[14:0], ACL_MOSI};
+        // end
         
-        repeat(8) begin
-            @(negedge ACL_SCLK)
-            ACL_MISO = ~ACL_MISO;
-        end
+        // repeat(8) begin
+        //     @(negedge ACL_SCLK)
+        //     ACL_MISO = ~ACL_MISO;
+        // end
     end
 
     // Generate 100MHz clock signal

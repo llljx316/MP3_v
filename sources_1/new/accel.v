@@ -133,7 +133,7 @@ module accel(
                 uart_dout_ready <= 1'b1;
             end
             else begin
-                uart_din_d <= uart_din;//yanshi?
+                uart_din_d <= uart_din;//一次读一次移动
             end
             din_count <= din_count + 4'd1;
         end
