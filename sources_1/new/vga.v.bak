@@ -141,6 +141,9 @@ module vga(
         .addrb( addrb          )
 
     );
+    always @(sy)
+        if(sy == 360)
+        $finish;
 
     assign VGA_R    = de ? red : 4'b0;
     assign VGA_G    = de ? green : 4'b0;

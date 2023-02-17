@@ -22,9 +22,9 @@
 //`define test_audio
 
 module mp3#(
-    parameter DELAY_TIME = 500,
+    parameter DELAY_TIME = 2000000*1,//1s—”≥Ÿ
     parameter CMD_NUM = 2,
-    parameter SONG_SIZE = 5000
+    parameter SONG_SIZE = 3000
 )(
         input clk,
         input  rst_n,
@@ -167,23 +167,23 @@ module mp3#(
         //reset
         if(!rst_n || song_select!=i_song_select) begin
             song_select <= i_song_select;
-                o_XCS <= 1'b1;
-                o_XDCS <= 1'b1;
-                o_XRST <= 1'b0; 
-                o_SCK <= 1'b0;
-                cmd <=  {32'h02000804,16'h020B,i_vol};
-                addr <= 0;
-                pause <= i_pause;
-                o_finish_song <= 0;
-                cmd_cnt <= 0;
-                cnt <= 0;
-                delay_cnt <= 0;
-                state <= DELAY;
-                o_LED <= 1'b0;
-                //delay_cnt1 <= 0;
+            o_XCS <= 1'b1;
+            o_XDCS <= 1'b1;
+            o_XRST <= 1'b0; 
+            o_SCK <= 1'b0;
+            cmd <=  {32'h02000804,16'h020B,i_vol};
+            addr <= 0;
+            pause <= i_pause;
+            o_finish_song <= 0;
+            cmd_cnt <= 0;
+            cnt <= 0;
+            delay_cnt <= 0;
+            state <= DELAY;
+            o_LED <= 1'b0;
+            //delay_cnt1 <= 0;
         end
         else begin
-            
+            song_select <= i_song_select;
             o_LED <= 1'b1;
             case (state)
 
