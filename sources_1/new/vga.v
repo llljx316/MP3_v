@@ -30,6 +30,8 @@ module vga(
     input  wire [15:0] doutb,
     input wire [3:0] vol_level,
     input wire i_finish_song,
+    input wire signed [7:0] alc_x,
+    input wire signed [7:0] alc_y,
     
     output wire VGA_HS,             // horizontal sync output
     output wire VGA_VS,             // vertical sync output
@@ -134,6 +136,8 @@ module vga(
         .i_vs( VGA_VS          ),
         .vol_level (vol_level),
         .i_finish_song(i_finish_song),
+        .alc_x                   ( alc_x       ),
+        .alc_y                   ( alc_y       ),
 
         .o_red(red),
         .o_green(green),

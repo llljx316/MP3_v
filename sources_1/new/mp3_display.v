@@ -36,6 +36,8 @@ module mp3_display #(
         input wire i_vs,
         input wire [3:0] vol_level,
         input wire i_finish_song,
+        input wire signed [7:0] alc_x,
+        input wire signed [7:0] alc_y,
 
         output reg [3:0] o_red,
         output reg [3:0] o_green,
@@ -43,18 +45,43 @@ module mp3_display #(
         output reg [14:0] addrb
     );
 
-    localparam HR = H_RES;              // horizontal resolution (pixels)
-    localparam VR = V_RES;              // vertical resolution (lines)
-    localparam BW = 16;                 // border width
-    localparam SQ = VR >> 6;            // square unit
-    localparam SX = (HR >> 1);   // middle of the picture
-    localparam SY = ((VR >> 1) + (VR >> 2));   // square start vertical
-    localparam SX_NEXT = (HR>>1)+(SQ<<4);
-    localparam SX_PRE  = (HR>>1)-(SQ<<4);   //next begin
-    localparam SX_VOLPLUS = (HR>>1)+(SQ<<5);
-    localparam SX_VOLDEC = (HR>>1)-(SQ<<5);
-    localparam SX_VOL_DISPLAY = SX_VOLPLUS + (SQ<<2);
-    localparam SY_VOL_DISPLAY_BOTTOM = SY - SQ;
+    wire signed [15:0] alc_x16 = {alc_x[7]?8'hff:8'h00,alc_x};
+    wire signed [15:0] alc_y16 = {alc_y[7]?8'hff:8'h00,alc_y};
+
+    parameter [15:0]    HR = H_RES,              // horizontal resolution (pixels)
+                        VR = V_RES,              // vertical resolution (lines)
+                        BW = 16,                 // border width
+                        SQ = VR >> 6;            // square unit
+
+    localparam SX_DEF = (HR >> 1);
+    localparam SY_DEF = ((VR >> 1) + (VR >> 2));
+    reg [15:0] SX = (HR >> 1),   // middle of the picture
+               SY = ((VR >> 1) + (VR >> 2)),   // square start vertical
+               SX_NEXT = (HR>>1)+(SQ<<4),
+               SX_PRE  = (HR>>1)-(SQ<<4),   //next begin
+               SX_VOLPLUS = (HR>>1)+(SQ<<5),
+               SX_VOLDEC = (HR>>1)-(SQ<<5),
+               SX_VOL_DISPLAY = (HR>>1)+(SQ<<5) + (SQ<<2),
+               SY_VOL_DISPLAY_BOTTOM = ((VR >> 1) + (VR >> 2)) - SQ;
+
+    //change for SX SY
+    always @(posedge clk) begin
+        if(~rst_n) begin
+            SX <= (HR >> 1);   // middle of the picture
+            SY <= ((VR >> 1) + (VR >> 2));   // square start vertical
+        end
+        else begin
+            SX <= SX_DEF + alc_y16;
+            SY <= SY_DEF - alc_x16;
+        end
+
+        SX_NEXT <= SX + (SQ<<4);
+        SX_PRE <= SX - (SQ<<4); //next begin
+        SX_VOLPLUS <= SX+(SQ<<5);
+        SX_VOLDEC <= SX-(SQ<<5);
+        SX_VOL_DISPLAY <= SX_VOLPLUS + (SQ<<2);
+        SY_VOL_DISPLAY_BOTTOM <= SY - SQ;
+    end 
 
     localparam LS = 2;                  // line spacing
     wire [3:0] color_square [0:2];
@@ -244,7 +271,7 @@ module mp3_display #(
     reg [3:0] red_buf,green_buf,blue_buf;
     reg [4:0] get_color_delay_cnt = 0;
     //integer color_cnt = 0;//用于图像转文字
-    always@(negedge clk) begin
+    always@(negedge clk or negedge rst_n) begin
         //rst
         if(play1 | next1 | pre1 | next1_rt | pre1_rt) begin
             o_red <= 4'hf;

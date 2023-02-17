@@ -20,7 +20,8 @@ reg   clk                                  = 0 ;
 reg   MISO                                 = 0 ;
 
 // get_acl_data Outputs
-wire  [7:0]  z_data                        ;
+wire  [7:0]  x_data                        ;
+wire  [7:0]  y_data                        ;
 wire  LED_INT1                             ;
 wire  LED_INT2                             ;
 wire  CSN                                  ;
@@ -52,7 +53,8 @@ get_acl_data #(
     .clk                     ( clk             ),
     .MISO                    ( MISO            ),
 
-    .z_data                  ( z_data    [7:0] ),
+    .x_data                  ( x_data    [7:0] ),
+    .y_data                  ( y_data          ),
     .LED_INT1                ( LED_INT1        ),
     .LED_INT2                ( LED_INT2        ),
     .CSN                     ( CSN             ),

@@ -45,7 +45,16 @@ module top(
     output wire [3:0]VGA_G,
     output wire [3:0]VGA_B,
     output wire o_next,
-    output wire [7:0]o_vol_led
+    output wire [7:0]o_vol_led,
+
+    //accelerometer
+    input       ACL_MISO,
+    input       ACL_INT1,
+    input       ACL_INT2,
+    output wire ACL_CSN,
+    output wire ACL_SCLK,
+    output wire ACL_MOSI
+
     
     );
 
@@ -118,7 +127,8 @@ module top(
     );
 
     assign o_next = next;// for test
-    
+
+    wire signed [7:0] x_data, y_data;//x y Æ«ÒÆÊý¾Ý
     vga  display_vga (
         .CLK                     ( clk            ),
         .RST_BTN                 ( rst_n        ),
@@ -129,6 +139,8 @@ module top(
         .doutb                   ( doutb          ),
         .i_finish_song           ( finish_song           ),
         .vol_level               ( vol_level    ),
+        .alc_x                   ( x_data       ),
+        .alc_y                   ( y_data       ),
 
         .VGA_HS                  ( VGA_HS         ),
         .VGA_VS                  ( VGA_VS         ),
@@ -137,6 +149,7 @@ module top(
         .VGA_B                   ( VGA_B          ),
         .addrb                   ( addrb          )
     );
+    
 
     wire [7:0] minute, second;
     wire [15:0] dtime;
@@ -186,5 +199,21 @@ module top(
         .o_vol_led(o_vol_led)
     );
 
+    //accelerometer
+    get_acl_data u_get_acl_data (
+        .rst                     ( ~rst_n          ),
+        .clk                     ( clk             ),
+        .MISO                    ( ACL_MISO            ),
+        .INT1                    ( ACL_INT1            ),
+        .INT2                    ( ACL_INT2            ),
+
+        .x_data                  ( x_data    [7:0] ),
+        .y_data                  ( y_data    [7:0] ),
+        .LED_INT1                (         ),
+        .LED_INT2                (         ),
+        .CSN                     ( ACL_CSN             ),
+        .SCLK                    ( ACL_SCLK            ),
+        .MOSI                    ( ACL_MOSI            )
+    );
 
 endmodule

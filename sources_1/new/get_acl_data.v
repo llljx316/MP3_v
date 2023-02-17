@@ -22,12 +22,13 @@
 
 module get_acl_data(
     input                   rst,
-    input                   clk,
+    input                   clk,    //
     //input                   start,
     //input                   done,
     //output reg              transmit,
     //output reg [9:0]        y_axis_data,
-    output reg              [7:0] z_data,
+    output reg              [7:0] x_data,
+    output reg              [7:0] y_data,
 
     //INT
     output reg LED_INT1,
@@ -134,6 +135,7 @@ module get_acl_data(
     wire din_valid;
 
     integer config_cnt;
+    reg [7:0] reg_cnt;
 
     SPI_transmitter u_SPI_transmitter (
         .clk                     ( clk              ),
@@ -160,7 +162,7 @@ module get_acl_data(
         //-----------------------------------------------
         //						Master Controller
         //-----------------------------------------------
-        always @(posedge clk)
+        always @(posedge clk or posedge rst)
         begin: spi_masterProcess
             begin
                 // Debounce Start Button
@@ -193,6 +195,7 @@ module get_acl_data(
                                 STATE <= state_type_configure;
                                 config_cnt <= 0;
                                 break_count <= 0;
+                                reg_cnt <= 8;
                                 //txdata <= POWER_CTL; //?
                                 //transmit <= 1'b1; //ready
                             end
@@ -210,6 +213,7 @@ module get_acl_data(
                                 STATE <= state_type_transmitting;//传输想要获得的数据
                                 config_cnt <= 0;
                                 end_configure <= 1;
+                                reg_cnt <= 8;
                             end
                             else begin
                                 ready <= 1;
@@ -230,6 +234,7 @@ module get_acl_data(
                                 //表明数据传输完毕
                                 STATE <= state_type_configure;
                                 config_cnt <= config_cnt + 1;
+                                
                             end
                             // end
                             // else break_count <= break_count + 1;
@@ -242,8 +247,15 @@ module get_acl_data(
                             STATE <= state_type_recieving;
                             inst <= INST_READ;
                             rdh_wrl <= 1;
-                            reg_addr <= 8'h09;
+                            //reg_addr <= 8'h09;
+                            reg_addr <= reg_cnt;
+                            if(reg_cnt==8) begin
+                                reg_cnt <= reg_cnt + 1;
+                            end
 
+                            else begin
+                                reg_cnt <= 8;
+                            end 
                             ready <= 1;
                             //transmit <= 1'b1;
                         end
@@ -251,31 +263,23 @@ module get_acl_data(
                         //recieving controls the flow of data into the spi_master
                         state_type_recieving : begin
                             ready <= 0;
-                            case (reg_addr)
-                                8'h09 ://Y轴
+                            
                                     begin
                                         if (din_valid == 1'b1)
                                         begin
                                             //txdata <= yAxis1;
                                             //y_axis_data[7:0] <= rxdata[7:0];
                                             //register_select <= 1'b1;
-                                            z_data <= din;
+                                            case (reg_addr)
+                                            8'h08: x_data <= din;
+                                            default ://Y轴
+                                                y_data <= din;
+                                            
+                                            endcase
                                             STATE <= state_type_finished;
                                         end
                                     end
-                                default : ;
-                                    // begin
-                                    //     transmit <= 1'b0;
-                                    //     if (done == 1'b1)
-                                    //     begin
-                                    //         txdata <= yAxis0;
-                                    //         y_axis_data[9:8] <= rxdata[1:0];
-                                    //         register_select <= 1'b0;
-                                    //         STATE <= state_type_finished;
-                                    //         sample_done <= 1'b1;
-                                    //     end
-                                    // end
-                            endcase
+                            
                         end
                         
                         //finished leads to the break state when transmission completed
