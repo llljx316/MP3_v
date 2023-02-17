@@ -21,8 +21,8 @@
 
 
 module led_display(
-    input [4:0] vol_level,
-    input rst_n,
+    input wire [4:0] vol_level,
+    input wire rst_n,
     output reg [7:0] o_vol_led
     );
 

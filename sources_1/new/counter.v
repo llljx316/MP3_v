@@ -23,9 +23,9 @@
 module counter(
     input wire clk,
     input wire rst_n,
-    input next,
-    input pre,
-    input i_finish_song,
+    input wire next,
+    input wire pre,
+    input wire i_finish_song,
 
     output reg [7:0] minute,
     output reg [7:0] second

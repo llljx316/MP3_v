@@ -1,3 +1,7 @@
+`timescale 1ns / 1ps
+
+`default_nettype wire
+
 module SPI_transmitter(
     input      clk,
     input      rst,
@@ -150,6 +154,7 @@ module SPI_transmitter(
                 next_state <= ENDING;
             end
         end
+
         READ_DATA:
         begin	// get a byte
             if(SCLK_posedge && (MOSI_count < 4'd7)) begin
