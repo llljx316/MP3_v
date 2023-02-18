@@ -5,8 +5,8 @@ module tb_mp3;
 
 // mp3 Parameters
 parameter PERIOD      = 0.01   ;
-parameter DELAY_TIME  = 5000;
-parameter CMD_NUM     = 2     ;
+parameter DELAY_TIME  = 5;
+parameter CMD_NUM     = 3     ;
 
 // mp3 Inputs
 reg   clk                                  = 0 ;
@@ -15,6 +15,8 @@ reg   i_DREQ                               = 1 ;
 reg   i_song_select                        = 0 ;
 reg   i_pause                              = 0 ;
 reg   [15:0]  i_vol                        = 0 ;
+reg   [15:0] i_effect                      = 0 ;
+
 
 // mp3 Outputs
 wire  o_XCS                                ;
@@ -23,7 +25,6 @@ wire  o_SCK                                ;
 wire  o_SI                                 ;
 wire  o_XRST                               ;
 wire  o_LED                                ;
-wire  o_FINISH                             ;
 wire  [15:0]  o_vol                        ;
 wire  o_song_select                        ;
 
@@ -39,6 +40,13 @@ begin
 end
 
 integer cnt = 0;
+
+initial begin
+    #(PERIOD*150)  i_effect = 1;
+    #(PERIOD* 10) $finish;
+end
+
+
 always@(negedge o_XDCS) begin
     // if(cnt == 15)
     //     i_song_select = i_song_select + 1;
@@ -66,6 +74,7 @@ mp3 #(
     .i_song_select           ( i_song_select         ),
     .i_pause                 ( i_pause               ),
     .i_vol                   ( i_vol          [15:0] ),
+    .i_effect                ( i_effect              ),
 
     .o_XCS                   ( o_XCS                 ),
     .o_XDCS                  ( o_XDCS                ),
@@ -73,7 +82,6 @@ mp3 #(
     .o_SI                    ( o_SI                  ),
     .o_XRST                  ( o_XRST                ),
     .o_LED                   ( o_LED                 ),
-    .o_FINISH                ( o_FINISH              ),
     .o_vol                   ( o_vol          [15:0] ),
     .o_song_select           ( o_song_select         )
 );

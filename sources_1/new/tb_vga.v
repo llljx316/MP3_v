@@ -31,12 +31,12 @@ wire  [14:0]  addrb                        ;
 
 initial
 begin
-    forever #(PERIOD/2)  clk=~clk;
+    forever #(PERIOD/2)  CLK=~CLK;
 end
 
 initial
 begin
-    #(PERIOD*2) rst_n  =  1;
+    #(PERIOD*2) RST_BTN  =  1;
 end
 
 vga  u_vga (

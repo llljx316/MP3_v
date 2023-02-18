@@ -21,13 +21,14 @@
 
 
 module led_display(
+    input wire clk,
     input wire [4:0] vol_level,
     input wire rst_n,
     output reg [7:0] o_vol_led
     );
 
     wire [4:0]vol_led_level = 8-vol_level; 
-    always@(vol_led_level or rst_n) begin
+    always@(posedge clk or negedge rst_n) begin
         if(~rst_n) begin
             o_vol_led <= 8'b0;
         end

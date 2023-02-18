@@ -69,6 +69,7 @@ module top(
     wire finish_song;
     wire [3:0] vol_level;
 
+    wire [15:0] meffect;
     bluetooth
     bluetooth_mp3 (
         .clk                     ( clk                   ),
@@ -83,7 +84,8 @@ module top(
         .o_next                  ( next                ),
         .o_pre                   ( pre                 ),
         .o_vol_plus              ( vol_plus            ),
-        .o_vol_dec               ( vol_dec             )
+        .o_vol_dec               ( vol_dec             ),
+        .o_effect                ( meffect            [15:0]  )
     );
 
     //picmem
@@ -111,6 +113,7 @@ module top(
         .i_vol                   ( vol           [15:0]   ),
         .i_song_select           ( song_select            ),
         .i_pause                 ( pause                  ),
+        .i_effect                ( meffect                ),//(  {x_data,y_data}        ),
 
         .o_XCS                   ( o_XCS                  ),
         .o_XDCS                  ( o_XDCS                 ),
@@ -128,7 +131,8 @@ module top(
 
     assign o_next = next;// for test
 
-    wire signed [7:0] x_data, y_data;//x y 偏移数据
+    wire signed [7:0] x_data;
+    wire signed [7:0] y_data;//x y 偏移数据
     vga  display_vga (
         .CLK                     ( clk            ),
         .RST_BTN                 ( rst_n        ),
@@ -137,10 +141,11 @@ module top(
         .i_vol_plus              ( vol_plus     ),
         .i_vol_dec               ( vol_dec      ),
         .doutb                   ( doutb          ),
-        .i_finish_song           ( finish_song           ),
+        .i_finish_song           ( finish_song   ),
         .vol_level               ( vol_level    ),
         .alc_x                   ( x_data       ),
         .alc_y                   ( y_data       ),
+        .i_pause                 ( pause        ),
 
         .VGA_HS                  ( VGA_HS         ),
         .VGA_VS                  ( VGA_VS         ),
@@ -156,7 +161,7 @@ module top(
 
     counter  u_counter (
         .clk                     ( clk           ),
-        .rst_n                   ( rst_n         ),
+        .rst_n                   ( rst_n & ~pause  ),
         .next                    ( next          ),
         .pre                     ( pre           ),
 
@@ -173,7 +178,7 @@ module top(
         .dp_in(8'b00000100),
         .idigit(8'b00001111),
 
-        .rst_n(rst_n),
+        .rst_n(rst_n&~pause),
         .clk(clk),
         .onum(onum),          
         .odigit(odigit)  
@@ -195,6 +200,8 @@ module top(
     //     endcase
     // end
     led_display leds(
+        .clk(clk),
+        .rst_n(rst_n),
         .vol_level(vol_level),
         .o_vol_led(o_vol_led)
     );

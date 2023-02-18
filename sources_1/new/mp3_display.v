@@ -38,6 +38,7 @@ module mp3_display #(
         input wire i_finish_song,
         input wire signed [7:0] alc_x,
         input wire signed [7:0] alc_y,
+        input wire i_pause,
 
         output reg [3:0] o_red,
         output reg [3:0] o_green,
@@ -71,8 +72,8 @@ module mp3_display #(
             SY <= ((VR >> 1) + (VR >> 2));   // square start vertical
         end
         else begin
-            SX <= SX_DEF + alc_y16;
-            SY <= SY_DEF - alc_x16;
+            SX <= SX_DEF - alc_y16;
+            SY <= SY_DEF + alc_x16;
         end
 
         SX_NEXT <= SX + (SQ<<4);
@@ -149,7 +150,7 @@ module mp3_display #(
     wire vol_dec = (i_x>SX_VOLDEC+3) & (i_x < SX_VOLDEC+ 30) & (i_y >= SY) & (i_y < SY+30);
 
     //mem_pic
-    wire music_pic = (i_x>=SX-100)&(i_x<SX+100) & (i_y >= SY - 250) & (i_y <SY - 50);
+    wire music_pic = (i_x>=SX-100)&(i_x<SX+100) & (i_y >= SY - 250) & (i_y <SY - 100);
 
     //vol_sqaure
     reg [7:0] vol_sqaure;
@@ -210,7 +211,7 @@ module mp3_display #(
     //wire vol_sx = (vol_dec?SX_VOLDEC:SX_VOLPLUS);
     always@(posedge clk or negedge rst_n) begin
         if(~rst_n) begin
-            state <= 0;
+            state <= BEG;
             cnt<=0;
             //display_cnt <= 0;
            
@@ -254,11 +255,11 @@ module mp3_display #(
     //每一次增加
     integer display_delay_cnt =0 ;
     always@(negedge clk or negedge rst_n) begin
-        if(~rst_n | next | pre | i_finish_song) begin 
+        if(~rst_n | next | pre | i_finish_song | i_pause) begin 
             display_cnt <= 0; 
             display_delay_cnt <=0 ;
         end
-        else if(display_delay_cnt == 3000000)  begin 
+        else if(display_delay_cnt == 4500000)  begin 
             display_cnt <= display_cnt + 16'h1;
             display_delay_cnt <= 0;
         end
@@ -273,57 +274,87 @@ module mp3_display #(
     //integer color_cnt = 0;//用于图像转文字
     always@(negedge clk or negedge rst_n) begin
         //rst
-        if(play1 | next1 | pre1 | next1_rt | pre1_rt) begin
-            o_red <= 4'hf;
-            o_green <= 4'hf;
-            o_blue <= 4'hf;
-            get_color_delay_cnt <= 0;
-
+        if(~rst_n) begin
+            o_red <= 0;
+            o_green <= 0;
+            o_blue <= 0;
         end
-
-        //next pre
-        else if((next & next_square ) | (pre & pre_square)) begin
-            o_red <= color_square[0];
-            o_green <= color_square[1];
-            o_blue <= color_square[2];
-        end
-
-        //voldec pic
-        else if(vol_dec) begin
-            addr <= (i_y-SY) * (32) + i_x - SX_VOLDEC ;
-
-            if(dout_dec == 0) begin
+        else begin
+            if(play1 | next1 | pre1 | next1_rt | pre1_rt) begin
                 o_red <= 4'hf;
-                o_blue <= 4'hf;
                 o_green <= 4'hf;
+                o_blue <= 4'hf;
+                get_color_delay_cnt <= 0;
+
             end
-            else begin
-                if(i_vol_dec)begin
-                    o_red <= color_square[0];
-                    o_green <= color_square[1];
-                    o_blue <= color_square[2];
+
+            //next pre
+            else if((next & next_square ) | (pre & pre_square)) begin
+                o_red <= color_square[0];
+                o_green <= color_square[1];
+                o_blue <= color_square[2];
+            end
+
+            //voldec pic
+            else if(vol_dec) begin
+                addr <= (i_y-SY) * (32) + i_x - SX_VOLDEC ;
+
+                if(dout_dec == 0) begin
+                    o_red <= 4'hf;
+                    o_blue <= 4'hf;
+                    o_green <= 4'hf;
                 end
                 else begin
-                    o_red <= 4'h0;
-                    o_green <= 4'h0;
-                    o_blue <= 4'h0;
+                    if(i_vol_dec)begin
+                        o_red <= color_square[0];
+                        o_green <= color_square[1];
+                        o_blue <= color_square[2];
+                    end
+                    else begin
+                        o_red <= 4'h0;
+                        o_green <= 4'h0;
+                        o_blue <= 4'h0;
+                    end
                 end
             end
-        end
-        
-        else if(vol_plus) begin
             
-            addr <= (i_y-SY) * (32) +( i_x - SX_VOLPLUS );
-            if(dout_plus == 0) begin
-                o_red <= 4'hf;
-                o_blue <= 4'hf;
-                o_green <= 4'hf;
+            else if(vol_plus) begin
+                
+                addr <= (i_y-SY) * (32) +( i_x - SX_VOLPLUS );
+                if(dout_plus == 0) begin
+                    o_red <= 4'hf;
+                    o_blue <= 4'hf;
+                    o_green <= 4'hf;
+                end
+                else begin
+                    if(i_vol_plus)begin
+                        o_red <= color_square[0];
+                        o_green <= color_square[1];
+                        o_blue <= color_square[2];
+                    end
+                    else begin
+                        o_red <= 4'h0;
+                        o_green <= 4'h0;
+                        o_blue <= 4'h0;
+                    end
+                end
             end
-            else begin
-                if(i_vol_plus)begin
-                    o_red <= color_square[0];
-                    o_green <= color_square[1];
-                    o_blue <= color_square[2];
+
+            else if(music_pic&&~i_pause) begin
+                addrb <= ((i_x -(SX-100)) >> 2) + ((i_y -(SY-250)) >> 2)* 50;
+                if(addrb < display_cnt) begin
+                    o_red <= {doutb[3:0]};
+                    o_green <= {doutb[7:4]};
+                    o_blue <= {doutb[11:8]};
+                end
+                else if(addrb == display_cnt) begin
+                    if(get_color_delay_cnt == 0) begin
+                        color_round[0] <=  {doutb[3:0]};
+                        color_round[1] <=  {doutb[7:4]};
+                        color_round[2] <=  {doutb[11:8]};//happy mode模式
+                    end
+                    get_color_delay_cnt <= get_color_delay_cnt + 1;
+
                 end
                 else begin
                     o_red <= 4'h0;
@@ -331,53 +362,30 @@ module mp3_display #(
                     o_blue <= 4'h0;
                 end
             end
-        end
 
-        else if(music_pic) begin
-            addrb <= ((i_x -(SX-100)) >> 2) + ((i_y -(SY-250)) >> 2)* 50;
-            if(addrb < display_cnt) begin
-                o_red <= {doutb[3:0]};
-                o_green <= {doutb[7:4]};
-                o_blue <= {doutb[11:8]};
-            end
-            else if(addrb == display_cnt) begin
-                if(get_color_delay_cnt == 0) begin
-                    color_round[0] <=  {doutb[3:0]};
-                    color_round[1] <=  {doutb[7:4]};
-                    color_round[2] <=  {doutb[11:8]};//happy mode模式
-                end
-                get_color_delay_cnt <= get_color_delay_cnt + 1;
+            
 
+            else if((square_top|square_bottom|square_left|square_right)&&~i_pause) begin
+                o_red <= color_round[0];
+                o_green <= color_round[1];
+                o_blue <= color_round[2];
             end
+
+            //vol_display
+            else if((i_vol_dec| i_vol_plus) &&((vol_sqaure[0]&&vol1_display) || (vol_sqaure[1]&&vol2_display) || (vol_sqaure[2]&&vol3_display)
+            || (vol_sqaure[3]&&vol4_display) || (vol_sqaure[4]&&vol5_display) || (vol_sqaure[5]&&vol6_display) 
+            || (vol_sqaure[6]&&vol7_display) || (vol_sqaure[7]&&vol8_display)) ) begin                    
+                o_red   <= color_vol[0];
+                o_green <= color_vol[1];
+                o_blue  <= color_vol[2];
+            end
+
+
             else begin
                 o_red <= 4'h0;
                 o_green <= 4'h0;
                 o_blue <= 4'h0;
             end
-        end
-
-        
-
-        else if(square_top|square_bottom|square_left|square_right) begin
-            o_red <= color_round[0];
-            o_green <= color_round[1];
-            o_blue <= color_round[2];
-        end
-
-        //vol_display
-        else if((i_vol_dec| i_vol_plus) &&((vol_sqaure[0]&&vol1_display) || (vol_sqaure[1]&&vol2_display) || (vol_sqaure[2]&&vol3_display)
-        || (vol_sqaure[3]&&vol4_display) || (vol_sqaure[4]&&vol5_display) || (vol_sqaure[5]&&vol6_display) 
-        || (vol_sqaure[6]&&vol7_display) || (vol_sqaure[7]&&vol8_display)) ) begin                    
-            o_red   <= color_vol[0];
-            o_green <= color_vol[1];
-            o_blue  <= color_vol[2];
-        end
-
-
-        else begin
-            o_red <= 4'h0;
-            o_green <= 4'h0;
-            o_blue <= 4'h0;
         end
     end
 endmodule

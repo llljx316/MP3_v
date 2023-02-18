@@ -37,7 +37,6 @@ bluetooth #(
     .clk                     ( clk                   ),
     .rst_n                   ( rst_n                 ),
     .rx                      ( rx                    ),
-    .i_FINISH                ( i_FINISH              ),
 
     .o_vol                   ( o_vol          [15:0] ),
     .o_song_select           ( o_song_select  [4:0]  ),

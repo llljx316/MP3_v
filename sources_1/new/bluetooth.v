@@ -36,7 +36,8 @@ module bluetooth#(
     output reg o_pre,
     output reg o_pause,
     output reg o_vol_plus,
-    output reg o_vol_dec
+    output reg o_vol_dec,
+    output reg [15:0] o_effect
     );
 
     //---------------state-------------------//
@@ -46,8 +47,9 @@ module bluetooth#(
     localparam PRE      = 3;
     localparam VOL_PLUS = 4;
     localparam VOL_DEC  = 5;
-    localparam MUSIC0   = 8'h40;
-    localparam MUSIC1   = 8'h41;
+    localparam EFFECT0   = 8'h40;
+    localparam EFFECT1   = 8'h41;
+    localparam EFFECT2   = 8'h42;
     localparam DELAY    = 6;
 
     localparam VOL_CHANGE = 14;
@@ -76,7 +78,7 @@ module bluetooth#(
     always@(posedge clk or negedge rst_n) begin
         if(~rst_n) begin
             vol_level <= 0;
-            o_pause <= 0;
+            o_pause <= 1;
             o_song_select <= 0;
             o_pre <= 0;
             o_next <= 0;
@@ -133,13 +135,18 @@ module bluetooth#(
                     o_vol_dec <= 1;
                 end
 
-                MUSIC0:begin
-                    o_song_select <= 0;
+                EFFECT0:begin
+                    o_effect <= 16'h0000;
                     state <= CMD_PRE;
                 end
 
-                MUSIC1: begin
-                    o_song_select <= 1;
+                EFFECT1: begin
+                    o_effect <= 16'h7000;
+                    state <= CMD_PRE;
+                end
+
+                EFFECT2: begin
+                    o_effect <= 16'h00f0;
                     state <= CMD_PRE;
                 end
 
