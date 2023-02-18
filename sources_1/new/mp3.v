@@ -101,7 +101,7 @@ module mp3#(
     //first command: new mode and soft reset
     //second command: biggest volume
     reg [95:0] cmd;
-    reg [2:0] effect_now;
+    // reg [2:0] effect_now;
     //reg [31:0] vol_cmd ;
     reg [15:0] vol;
 
@@ -160,19 +160,20 @@ module mp3#(
     //pic
     assign addra = addr;
     assign dina = data;
-    
+    reg[15:0] effect = 0;
 
     reg [15:0] _Data;
     localparam VOL_CMD_TIMES = 1;
     //state machine
     always@(posedge clk_mp3 or negedge rst_n) begin
         //reset
-        if(!rst_n || song_select!=i_song_select || i_pause /* || (i_effect != cmd[47:32])*/) begin
+        if(!rst_n || song_select!=i_song_select || i_pause  || (i_effect != effect)) begin
             song_select <= i_song_select;
             o_XCS <= 1'b1;
             o_XDCS <= 1'b1;
             o_XRST <= 1'b0; 
             o_SCK <= 1'b0;
+            effect <= i_effect;
             cmd <=  {32'h02000804,16'h0202,i_effect,16'h020B,i_vol};
             addr <= 0;
             //pause <= i_pause;
@@ -186,7 +187,7 @@ module mp3#(
         end
         else begin
             song_select <= i_song_select;
-            cmd[47:32] <= i_effect;
+            effect <= i_effect;
             o_LED <= 1'b1;
             case (state)
 

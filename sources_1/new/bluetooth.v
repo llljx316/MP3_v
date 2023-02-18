@@ -141,12 +141,12 @@ module bluetooth#(
                 end
 
                 EFFECT1: begin
-                    o_effect <= 16'h7000;
+                    o_effect <= 16'h0707;
                     state <= CMD_PRE;
                 end
 
                 EFFECT2: begin
-                    o_effect <= 16'h00f0;
+                    o_effect <= 16'hf0f0;
                     state <= CMD_PRE;
                 end
 

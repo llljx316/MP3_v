@@ -171,16 +171,10 @@ module get_acl_data(
                 if (rst == 1'b1) begin
                     //transmit <= 1'b0;
                     STATE <= state_type_idle;
-                    // break_count <= 12'h000;
-                    // hold_count <= 21'b000000000000000000000;
+                    
                     done_configure <= 1'b0;//
                     config_cnt <= 0;
-                    //CONFIGUREsel <= configure_type_powerCtl;
-                    //txdata <= 16'h0000;
-                    // register_select <= 1'b0;
-                    // sample_done <= 1'b0;
-                    // finish <= 1'b0;
-                    // y_axis_data <= 10'b0000000000;
+                    
                     end_configure <= 1'b0;
                     ready <= 0;
                     rdh_wrl <= 1;
@@ -225,19 +219,19 @@ module get_acl_data(
                                 //break_count <= 0;
                             end
                         end
-
+                        //没传完直接发新的
                         state_type_break1: begin
                             ready <= 0;
-                            //if(break_count == 12'hf)begin
-                            //break_count=0;
+                            if(break_count == 12'hff)begin
+                            break_count=0;
                             if(CSN == 1) begin
                                 //表明数据传输完毕
                                 STATE <= state_type_configure;
                                 config_cnt <= config_cnt + 1;
                                 
                             end
-                            // end
-                            // else break_count <= break_count + 1;
+                            end
+                            else break_count <= break_count + 1;
                         end
                         
                         //transmitting leads to the transmission of addresses of data to sample them
@@ -300,50 +294,13 @@ module get_acl_data(
                             if (break_count == 12'hFF)
                             begin
                                 break_count <= 12'h000;
-                                //only exit to idle if start has been de-asserted ( to keep from 
-                                //looping transmitting and recieving undesirably ) and finish and 
-                                //sample_done are high showing that the desired action has been 
-                                //completed
-
-
-                                // if ((finish == 1'b1 | sample_done == 1'b1) & start == 1'b0)
-                                // begin
-                                //     STATE <= state_type_idle;
-                                //     txdata <= yAxis0;
-                                // end
-                                // //if done configure is high, and sample done is low, the reception
-                                // //has not been completed so the state goes back to transmitting
-                                // else if (sample_done == 1'b1 & start == 1'b1)
-                                //     STATE <= state_type_holding;
-                                // else if (done_configure == 1'b1 & sample_done == 1'b0)
-                                // begin
-                                //     STATE <= state_type_transmitting;
-                                //     transmit <= 1'b1;
-                                // end
-                                // //if the system has not finished configuration, then the state loops
-                                // //back to configure
-                                // else if (done_configure == 1'b0)
-                                //     STATE <= state_type_configure;
+                                
                                 $finish;
                                 STATE <= state_type_idle;
                             end
                             else
                                 break_count <= break_count + 1'b1;
-                        // state_type_holding ://暂时不管
-                        //     if (hold_count == 24'h1FFFFF)
-                        //     begin
-                        //         hold_count <= 21'd0;
-                        //         STATE <= state_type_transmitting;
-                        //         sample_done <= 1'b0;
-                        //     end
-                        //     else if (start <= 1'b0)
-                        //     begin
-                        //         STATE <= state_type_idle;
-                        //         hold_count <= 21'd0;
-                        //     end
-                        //     else begin
-                        //         hold_count <= hold_count + 1'b1;
-                        //     end
+                       
                         default: ;
                     endcase
             end

@@ -57,7 +57,7 @@ module top(
 
     
     );
-
+    wire mp3rstn = o_LED;
     wire [15:0] vol;
     wire [15:0] o_vol;
     wire [2:0] song_select;
@@ -120,7 +120,7 @@ module top(
         .o_SCK                   ( o_SCK                  ),
         .o_SI                    ( o_SI                   ),
         .o_XRST                  ( o_XRST                 ),
-        .o_LED                   ( o_LED                  ),
+        .o_LED                   ( mp3rstn                  ),
         .o_vol                   (o_vol          [15:0]),
         .o_song_select           (o_led_song_select       ),
         .addra                   ( addra                  ),
@@ -146,6 +146,7 @@ module top(
         .alc_x                   ( x_data       ),
         .alc_y                   ( y_data       ),
         .i_pause                 ( pause        ),
+        .mp3rstn                 ( mp3rstn      ),
 
         .VGA_HS                  ( VGA_HS         ),
         .VGA_VS                  ( VGA_VS         ),

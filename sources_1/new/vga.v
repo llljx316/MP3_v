@@ -33,6 +33,7 @@ module vga(
     input wire signed [7:0] alc_x,
     input wire signed [7:0] alc_y,
     input wire i_pause,
+    input wire mp3rstn,
     
     output wire VGA_HS,             // horizontal sync output
     output wire VGA_VS,             // vertical sync output
@@ -140,6 +141,7 @@ module vga(
         .alc_x                   ( alc_x       ),
         .alc_y                   ( alc_y       ),
         .i_pause                 ( i_pause),
+        .mp3rstn                 ( mp3rstn),
 
         .o_red(red),
         .o_green(green),

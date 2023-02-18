@@ -39,6 +39,7 @@ module mp3_display #(
         input wire signed [7:0] alc_x,
         input wire signed [7:0] alc_y,
         input wire i_pause,
+        input wire mp3rstn,
 
         output reg [3:0] o_red,
         output reg [3:0] o_green,
@@ -56,6 +57,7 @@ module mp3_display #(
 
     localparam SX_DEF = (HR >> 1);
     localparam SY_DEF = ((VR >> 1) + (VR >> 2));
+    reg [15:0] SX_REG, SY_REG;
     reg [15:0] SX = (HR >> 1),   // middle of the picture
                SY = ((VR >> 1) + (VR >> 2)),   // square start vertical
                SX_NEXT = (HR>>1)+(SQ<<4),
@@ -65,13 +67,43 @@ module mp3_display #(
                SX_VOL_DISPLAY = (HR>>1)+(SQ<<5) + (SQ<<2),
                SY_VOL_DISPLAY_BOTTOM = ((VR >> 1) + (VR >> 2)) - SQ;
 
+    localparam state_change = 0;
+    localparam state_move = 1;
+    localparam state_delay = 2;
+
+    reg [2:0] STATE1;
+
     //change for SX SY
     always @(posedge clk) begin
         if(~rst_n) begin
             SX <= (HR >> 1);   // middle of the picture
             SY <= ((VR >> 1) + (VR >> 2));   // square start vertical
+            SX_REG <= SX;
+            SY_REG <= SY;
         end
         else begin
+            case(STATE1)
+                state_change:begin
+                    SX_REG <= SX_DEF - alc_y16;
+                    SY_REG <= SY_DEF + alc_x16;
+                    STATE1 <= state_move;
+                end
+
+                state_move:begin
+                    if(SX!=SX_REG) begin
+                        SX <= SX + (SX<SX_REG?1:-1);
+                    end
+
+                    if(SY!=SY_REG) begin
+                        SY <= SY + (SY<SY_REG?1:-1);
+                    end
+
+                    if(SY==SY_REG && SX == SX_REG) begin
+                        STATE1 <= state_change;
+                    end
+                end
+
+            endcase
             SX <= SX_DEF - alc_y16;
             SY <= SY_DEF + alc_x16;
         end
@@ -140,6 +172,10 @@ module mp3_display #(
     wire next1_rt = (i_x >= SX_NEXT - 2*SQ) & (i_y >= SY) & (i_x < SX_NEXT - SQ) & (i_y < SY + 4*SQ);
     wire pre1 =  (i_x >= (i_y>SY + 2*SQ? (SX_PRE + i_y - SY - 2*SQ):(SX_PRE + SY + 2*SQ - i_y)))   & (i_y >= SY       ) & (i_x < SX_PRE + 2*SQ) & (i_y < SY + 4*SQ);
     wire pre1_rt = (i_x >= SX_PRE + 2*SQ + SQ) & (i_y >= SY) & (i_x < SX_PRE+4*SQ) &(i_y < SY+4*SQ);
+
+    wire pause1 = (i_x >= SX)        & (i_y >= SY       ) & (i_x < SX + SQ            ) & (i_y < SY + 4*SQ);
+    wire pause2 = (i_x >= SX + 2*SQ)        & (i_y >= SY       ) & (i_x < SX + 3*SQ            ) & (i_y < SY + 4*SQ);
+    wire play_pause_square = (i_x >= SX-3)        & (i_y >= SY-3       ) & (i_x < SX + 3*SQ +3         ) & (i_y < SY + 4*SQ + 3);
 
     wire square1 = (i_x >= SX-3)    & (i_y >= SY - 3   ) & (i_x < SX + 2*SQ + 3                          ) & (i_y < SY + 4*SQ + 3);
     wire next_square  = (i_x >= SX_NEXT - 2*SQ-3)    & (i_y >= SY - 3   ) & (i_x < SX_NEXT + 2*SQ + 3           ) & (i_y < SY + 4*SQ + 3);
@@ -255,7 +291,7 @@ module mp3_display #(
     //每一次增加
     integer display_delay_cnt =0 ;
     always@(negedge clk or negedge rst_n) begin
-        if(~rst_n | next | pre | i_finish_song | i_pause) begin 
+        if(~rst_n | next | pre | i_finish_song | i_pause | ~mp3rstn) begin 
             display_cnt <= 0; 
             display_delay_cnt <=0 ;
         end
@@ -271,6 +307,7 @@ module mp3_display #(
     //  buf
     reg [3:0] red_buf,green_buf,blue_buf;
     reg [4:0] get_color_delay_cnt = 0;
+    reg i_pause_reg;
     //integer color_cnt = 0;//用于图像转文字
     always@(negedge clk or negedge rst_n) begin
         //rst
@@ -278,9 +315,10 @@ module mp3_display #(
             o_red <= 0;
             o_green <= 0;
             o_blue <= 0;
+            i_pause_reg <= i_pause;
         end
         else begin
-            if(play1 | next1 | pre1 | next1_rt | pre1_rt) begin
+            if((play1&i_pause==1) | ((pause1 | pause2) & i_pause == 0) | next1 | pre1 | next1_rt | pre1_rt) begin
                 o_red <= 4'hf;
                 o_green <= 4'hf;
                 o_blue <= 4'hf;
@@ -290,6 +328,14 @@ module mp3_display #(
 
             //next pre
             else if((next & next_square ) | (pre & pre_square)) begin
+                o_red <= color_square[0];
+                o_green <= color_square[1];
+                o_blue <= color_square[2];
+            end
+
+            //pause play
+            else if(i_pause != i_pause_reg && play_pause_square) begin
+                i_pause_reg <= i_pause;
                 o_red <= color_square[0];
                 o_green <= color_square[1];
                 o_blue <= color_square[2];
