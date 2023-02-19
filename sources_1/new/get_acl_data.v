@@ -63,7 +63,6 @@ module get_acl_data(
     // Define FSM states
     parameter [2:0]  state_type_idle = 3'd0,
                         state_type_configure = 3'd1,
-                        //state_type_wait_trans=3'd7
                         state_type_transmitting = 3'd2,
                         state_type_recieving = 3'd3,
                         state_type_finished = 3'd4,
@@ -73,26 +72,9 @@ module get_acl_data(
     // STATE reg
     reg [2:0]        STATE;
     
-    parameter [1:0]  data_type_y_axis = 2'd1;
-
     
-    // parameter [1:0]  configure_type_powerCtl = 0,
-    //                 configure_type_bwRate = 1,
-    //                 configure_type_dataFormat = 2;
-    // reg [1:0]        CONFIGUREsel;
-    
-    //Setting up Configuration Registers
-    //POWER_CTL Bits 0x2D
-    parameter [15:0] POWER_CTL = 16'h2D08;
-    //BW_RATE Bits 0x2C
-    parameter [15:0] BW_RATE = 16'h2C08;
-    //CONFIG Bits 0x31
-    parameter [15:0] DATA_FORMAT = 16'h3100;
     
     //Axis registers set to only read and do it in single byte increments
-    parameter [15:0] yAxis0 = 16'hB400;		//10110100;
-    parameter [15:0] yAxis1 = 16'hB500;		//10110101;
-
     parameter [7:0] INST_WRITE = 8'h0A,
                     INST_READ  = 8'h0B;
 
@@ -117,14 +99,10 @@ module get_acl_data(
     assign DATA[5]   = 8'h0A;
     
     reg [11:0]       break_count;
-    reg [20:0]       hold_count;
+    //reg [20:0]       hold_count;
     reg              end_configure;
     reg              done_configure;
-    reg              register_select;
-    reg              finish;
-    reg              sample_done;
-    reg [3:0]        prevstart;
-
+    
     reg ready;//ready for trans
     reg [7:0] inst;
     reg rdh_wrl;
@@ -166,8 +144,6 @@ module get_acl_data(
         begin: spi_masterProcess
             begin
                 // Debounce Start Button
-                //prevstart <= {prevstart[2:0], start};
-                //Reset Condition
                 if (rst == 1'b1) begin
                     //transmit <= 1'b0;
                     STATE <= state_type_idle;
@@ -190,15 +166,11 @@ module get_acl_data(
                                 config_cnt <= 0;
                                 break_count <= 0;
                                 reg_cnt <= 8;
-                                //txdata <= POWER_CTL; //?
-                                //transmit <= 1'b1; //ready
                             end
                             //If the system has been configured, enter the transmission state when start is asserted
-                            else if (/*prevstart == 4'b0011 & start == 1'b1 & */done_configure == 1'b1) begin
+                            else if (done_configure == 1'b1) begin
                                 STATE <= state_type_transmitting;
-                                // finish <= 1'b0;
-                                // txdata <= yAxis0;
-                                // sample_done <= 1'b0;
+                                
                             end
                         state_type_configure :begin
                             //Substate of configure selects what configuration is output
@@ -261,9 +233,6 @@ module get_acl_data(
                                     begin
                                         if (din_valid == 1'b1)
                                         begin
-                                            //txdata <= yAxis1;
-                                            //y_axis_data[7:0] <= rxdata[7:0];
-                                            //register_select <= 1'b1;
                                             case (reg_addr)
                                             8'h08: x_data <= din;
                                             default ://YÖá

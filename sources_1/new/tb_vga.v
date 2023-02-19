@@ -19,6 +19,7 @@ reg   [3:0]  vol_level                     = 0 ;
 reg   i_finish_song                        = 0 ;
 reg   [7:0]  alc_x                         = 0 ;
 reg   [7:0]  alc_y                         = 0 ;
+reg          i_pause                       = 0 ;
 
 // vga Outputs
 wire  VGA_HS                               ;
@@ -51,6 +52,7 @@ vga  u_vga (
     .i_finish_song           ( i_finish_song         ),
     .alc_x                   ( alc_x          [7:0]  ),
     .alc_y                   ( alc_y          [7:0]  ),
+    .i_pause(i_pause),
 
     .VGA_HS                  ( VGA_HS                ),
     .VGA_VS                  ( VGA_VS                ),
@@ -62,7 +64,8 @@ vga  u_vga (
 
 initial
 begin
-
+    //œ‡”¶≤‚ ‘
+    #(PERIOD * 100) i_pause = 1;
     $finish;
 end
 

@@ -25,6 +25,7 @@ module mp3_display #(
     parameter V_RES=480
     ) (
         input wire clk,
+        input wire clk_vga,
         input wire rst_n,
         input wire signed [15:0] i_x,
         input wire signed [15:0] i_y,
@@ -74,7 +75,7 @@ module mp3_display #(
     reg [2:0] STATE1;
 
     //change for SX SY
-    always @(posedge clk) begin
+    always @(posedge clk_vga) begin
         if(~rst_n) begin
             SX <= (HR >> 1);   // middle of the picture
             SY <= ((VR >> 1) + (VR >> 2));   // square start vertical
@@ -204,6 +205,7 @@ module mp3_display #(
         endcase
     end
 
+    //音量大小的显示
     wire vol1_display = (i_x>=SX_VOL_DISPLAY    ) & (i_x<SX_VOL_DISPLAY + SQ*2  ) & (i_y >= SY_VOL_DISPLAY_BOTTOM - SQ    ) & (i_y < SY_VOL_DISPLAY_BOTTOM            );
     wire vol2_display = (i_x>=SX_VOL_DISPLAY    ) & (i_x<SX_VOL_DISPLAY + SQ*2  ) & (i_y >= SY_VOL_DISPLAY_BOTTOM - SQ*3  ) & (i_y < SY_VOL_DISPLAY_BOTTOM - SQ*2     );
     wire vol3_display = (i_x>=SX_VOL_DISPLAY    ) & (i_x<SX_VOL_DISPLAY + SQ*2  ) & (i_y >= SY_VOL_DISPLAY_BOTTOM - SQ*5  ) & (i_y < SY_VOL_DISPLAY_BOTTOM - SQ*4     );
@@ -242,13 +244,16 @@ module mp3_display #(
     localparam DELAY_TIME = 50;//test
     localparam BEG = 0;
     localparam DELAY = 1;
+    localparam DELAY_MORE = 2;
     reg [1:0] state = 0;
-    reg next,pre;
+    reg i_pause_reg;
+    reg next,pre,play_pause;
     //wire vol_sx = (vol_dec?SX_VOLDEC:SX_VOLPLUS);
     always@(posedge clk or negedge rst_n) begin
         if(~rst_n) begin
             state <= BEG;
             cnt<=0;
+            i_pause_reg <= i_pause;
             //display_cnt <= 0;
            
         end
@@ -264,15 +269,31 @@ module mp3_display #(
                     pre <= 1;
                     state <= DELAY;
                 end
+
+                else if(i_pause != i_pause_reg) begin
+                    play_pause <= 1;
+                    i_pause_reg <= i_pause;
+                    state <= DELAY_MORE;
+                end
                 
                 else begin
                     next <= 0;
                     pre <= 0;
+                    play_pause <= 0;
                 end
             end
             
             DELAY:begin
                 if(cnt==DELAY_TIME) begin
+                    state<=BEG;
+                    cnt <= 0;
+                end
+                else 
+                    cnt <= cnt+1;
+            end
+
+            DELAY_MORE: begin
+                if(cnt==5000) begin
                     state<=BEG;
                     cnt <= 0;
                 end
@@ -307,7 +328,6 @@ module mp3_display #(
     //  buf
     reg [3:0] red_buf,green_buf,blue_buf;
     reg [4:0] get_color_delay_cnt = 0;
-    reg i_pause_reg;
     //integer color_cnt = 0;//用于图像转文字
     always@(negedge clk or negedge rst_n) begin
         //rst
@@ -315,7 +335,6 @@ module mp3_display #(
             o_red <= 0;
             o_green <= 0;
             o_blue <= 0;
-            i_pause_reg <= i_pause;
         end
         else begin
             if((play1&i_pause==1) | ((pause1 | pause2) & i_pause == 0) | next1 | pre1 | next1_rt | pre1_rt) begin
@@ -323,23 +342,15 @@ module mp3_display #(
                 o_green <= 4'hf;
                 o_blue <= 4'hf;
                 get_color_delay_cnt <= 0;
-
             end
 
-            //next pre
-            else if((next & next_square ) | (pre & pre_square)) begin
+            //next pre pause play
+            else if((next & next_square ) | (pre & pre_square) | (play_pause & play_pause_square)) begin
                 o_red <= color_square[0];
                 o_green <= color_square[1];
                 o_blue <= color_square[2];
             end
 
-            //pause play
-            else if(i_pause != i_pause_reg && play_pause_square) begin
-                i_pause_reg <= i_pause;
-                o_red <= color_square[0];
-                o_green <= color_square[1];
-                o_blue <= color_square[2];
-            end
 
             //voldec pic
             else if(vol_dec) begin

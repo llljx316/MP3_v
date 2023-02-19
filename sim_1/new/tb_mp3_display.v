@@ -22,6 +22,7 @@ reg   [3:0]  vol_level                     = 0 ;
 reg   i_finish_song                        = 0 ;
 reg   [7:0]  alc_x                         = 0 ;
 reg   [7:0]  alc_y                         = 0 ;
+reg   i_pause                              = 0;
 
 // mp3_display Outputs
 wire  [3:0]  o_red                         ;
@@ -55,6 +56,7 @@ mp3_display
     .i_finish_song           ( i_finish_song         ),
     .alc_x                   ( alc_x          [7:0]  ),
     .alc_y                   ( alc_y          [7:0]  ),
+    .i_pause                 ( i_pause  ),
 
     .o_red                   ( o_red          [3:0]  ),
     .o_green                 ( o_green        [3:0]  ),
@@ -70,9 +72,11 @@ begin
     //#(PERIOD) i_pre = 0;
     #(PERIOD*6) i_x = 80;
     i_y = 350;
+    i_pause = 1;
+    $finish;
     repeat(120)
     #(PERIOD) i_x = i_x + 1;
-    #20 alc_x = 8'hfc;
+    //#20 alc_x = 8'hfc;
     #20;
     $finish;
 end

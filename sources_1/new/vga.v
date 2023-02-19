@@ -127,6 +127,7 @@ module vga(
     )
     mp3_show_vga (
         .clk(CLK),
+        .clk_vga(pix_clk),
         .rst_n(RST_BTN),
         .i_x(sx),
         .i_y(sy),
@@ -140,8 +141,8 @@ module vga(
         .i_finish_song(i_finish_song),
         .alc_x                   ( alc_x       ),
         .alc_y                   ( alc_y       ),
-        .i_pause                 ( i_pause),
-        .mp3rstn                 ( mp3rstn),
+        .i_pause                 ( i_pause     ),
+        .mp3rstn                 ( mp3rstn     ),
 
         .o_red(red),
         .o_green(green),

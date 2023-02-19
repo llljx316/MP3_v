@@ -52,25 +52,7 @@ module mp3#(
 
 
     reg clk_mp3;//2hz
-    // wire clk_temp;//8hz
-
-    // // clock_divider#(.Time(10))
-    // // clk_10(
-    // //     .clkin(clk),
-    // //     .clkout(clk_mp3)
-    // // );
-
-    // clk_wiz_0
-
-    // clk_div(
-    // // Clock out ports
-    // .clk_out1(clk_temp),
-    // // Status and control signals
-    // .resetn(1'b1),
-    // // Clock in ports
-    // .clk_in1(clk)
-    // );
-
+    //分频
     integer clk_cnt = 0;
     always@(posedge clk or negedge rst_n) begin
         if(~rst_n) begin
@@ -320,39 +302,6 @@ module mp3#(
                     else ;//empty
                 end
 
-                // EFFECT_PRE:begin
-                //     o_SCK <= 0;
-                //     if(cmd_cnt == 1) begin
-                //         state<=DATA_PRE;
-                //         cmd_cnt <= 0;
-                //     end
-                //     else if(i_DREQ) begin
-                //         state <= WRITE_EFFECT;
-                //         cnt <= 0;           //多加??
-                //     end
-                //     else ;
-                // end
-
-                // WRITE_EFFECT: begin
-                //     if(i_DREQ)begin
-                //         if(o_SCK) begin  //1
-                //             if(cnt == 32) begin
-                //                 o_XCS <= 1'b1;
-                //                 cnt <= 0;
-                //                 cmd_cnt <= cmd_cnt + 1;
-                //                 state <= EFFECT_PRE;//waiting for i_DREQ
-                //             end
-                //             else begin
-                //                 o_XCS <= 1'b0;
-                //                 cnt <= cnt + 1;
-                //                 o_SI <= cmd[63];
-                //                 cmd[63:32] <= {cmd[62:32],cmd[63]};//pos operation!
-                //             end
-                //         end
-                //         o_SCK <= ~o_SCK;//时钟信号刷新
-                //     end
-                //     else ;//empty
-                // end
 
                 DELAY:begin
                     if(delay_cnt == DELAY_TIME) begin
