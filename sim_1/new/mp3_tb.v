@@ -42,22 +42,22 @@ end
 integer cnt = 0;
 
 initial begin
-    #(PERIOD*150)  i_effect = 1;
+    #(PERIOD*150)  i_pause = 1;
     #(PERIOD* 10) $finish;
 end
 
 
 always@(negedge o_XDCS) begin
-    // if(cnt == 15)
-    //     i_song_select = i_song_select + 1;
-    // else if(cnt == 5) begin
-    //     //i_vol = 16'hfcfc;
-	// i_pause = 1;
-    // end
-    // else if(cnt==10)begin
-	// i_pause=0;
-	// $finish;
-    // end
+    if(cnt == 15)
+        i_song_select = i_song_select + 1;
+    else if(cnt == 5) begin
+        //i_vol = 16'hfcfc;
+	i_pause = 1;
+    end
+    else if(cnt==10)begin
+	i_pause=0;
+	$finish;
+    end
     if(cnt == 25)
         $finish;
     cnt <= cnt + 1;
